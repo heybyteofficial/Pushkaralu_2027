@@ -515,15 +515,7 @@ function FamilyMembers({ onBack }) {
             Use camera scanner or upload a file to register family details.
           </p>
 
-          <div className="grid grid-cols-3 gap-2 mt-4">
-            <button
-              onClick={handleCameraScan}
-              disabled={isProcessing}
-              className="rounded-2xl bg-brand-700 hover:bg-brand-800 disabled:opacity-60 text-white px-3 py-3 flex flex-col items-center justify-center gap-1.5 transition-all duration-300 active:scale-[0.98]"
-            >
-              <Camera className="w-5 h-5" />
-              <span className="text-[11px] font-black">Cam Scanner</span>
-            </button>
+          <div className="grid grid-cols-2 gap-2 mt-4">
 
             <button
               onClick={handleSelfieCam}
