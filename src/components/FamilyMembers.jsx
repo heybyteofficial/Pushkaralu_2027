@@ -9,6 +9,7 @@ import {
   Search,
   Trash2,
   UploadCloud,
+  UserRound,
   UsersRound,
   X,
 } from "lucide-react";
@@ -45,6 +46,7 @@ function FamilyMembers({ onBack }) {
   const [processingText, setProcessingText] = useState("");
 
   const [activeView, setActiveView] = useState("list");
+  const [cameraMode, setCameraMode] = useState("environment");
   const [cameraError, setCameraError] = useState("");
   const [capturedImage, setCapturedImage] = useState("");
   const [formData, setFormData] = useState(DEFAULT_FORM_DATA);
@@ -99,7 +101,7 @@ function FamilyMembers({ onBack }) {
     }
   };
 
-  const startCameraStream = async () => {
+  const startCameraStream = async (mode = "environment") => {
     if (!navigator.mediaDevices?.getUserMedia) {
       setCameraError("Camera is not supported in this browser.");
       return;
@@ -107,11 +109,21 @@ function FamilyMembers({ onBack }) {
 
     try {
       setCameraError("");
+      setCameraMode(mode);
       setActiveView("camera");
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: "environment" },
-        audio: false,
-      });
+      let stream;
+
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: { ideal: mode } },
+          audio: false,
+        });
+      } catch {
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: true,
+          audio: false,
+        });
+      }
 
       streamRef.current = stream;
 
@@ -129,7 +141,14 @@ function FamilyMembers({ onBack }) {
     setCapturedImage("");
     setFormData(DEFAULT_FORM_DATA);
     setFormErrors({});
-    startCameraStream();
+    startCameraStream("environment");
+  };
+
+  const handleSelfieCam = () => {
+    setCapturedImage("");
+    setFormData(DEFAULT_FORM_DATA);
+    setFormErrors({});
+    startCameraStream("user");
   };
 
   const handleCapturePhoto = () => {
@@ -276,6 +295,11 @@ function FamilyMembers({ onBack }) {
     setActiveView("list");
   };
 
+  const handleBackToFamilyPage = () => {
+    stopCameraStream();
+    setActiveView("list");
+  };
+
   const filteredMembers = useMemo(() => {
     return members.filter((member) => member.name.toLowerCase().includes(searchTerm.toLowerCase()));
   }, [members, searchTerm]);
@@ -319,7 +343,9 @@ function FamilyMembers({ onBack }) {
         {activeView === "camera" && (
           <section className="bg-white border border-slate-200 rounded-3xl p-4 shadow-sm mb-4">
             <div className="flex items-center justify-between gap-2">
-              <h3 className="text-xs font-black text-slate-800 uppercase tracking-wider">Camera Capture</h3>
+              <h3 className="text-xs font-black text-slate-800 uppercase tracking-wider">
+                {cameraMode === "user" ? "Selfie Capture" : "Camera Capture"}
+              </h3>
               <button
                 onClick={handleCloseCamera}
                 className="w-8 h-8 rounded-full border border-slate-200 bg-slate-50 hover:bg-slate-100 flex items-center justify-center text-slate-500"
@@ -489,7 +515,7 @@ function FamilyMembers({ onBack }) {
             Use camera scanner or upload a file to register family details.
           </p>
 
-          <div className="grid grid-cols-2 gap-3 mt-4">
+          <div className="grid grid-cols-3 gap-2 mt-4">
             <button
               onClick={handleCameraScan}
               disabled={isProcessing}
@@ -497,6 +523,16 @@ function FamilyMembers({ onBack }) {
             >
               <Camera className="w-5 h-5" />
               <span className="text-[11px] font-black">Cam Scanner</span>
+            </button>
+
+            <button
+              onClick={handleSelfieCam}
+              disabled={isProcessing}
+              className="rounded-2xl bg-brand-600 hover:bg-brand-700 disabled:opacity-60 text-white px-3 py-3 flex flex-col items-center justify-center gap-1.5 transition-all duration-300 active:scale-[0.98]"
+              aria-label="Open selfie camera"
+            >
+              <UserRound className="w-5 h-5" />
+              <span className="text-[11px] font-black">Selfie Cam</span>
             </button>
 
             <button
@@ -606,7 +642,7 @@ function FamilyMembers({ onBack }) {
 
         {activeView !== "list" && (
           <button
-            onClick={() => setActiveView("list")}
+            onClick={handleBackToFamilyPage}
             className="mt-4 h-11 rounded-2xl bg-slate-900 text-white text-[11px] font-black flex items-center justify-center gap-1.5"
           >
             <ArrowLeft className="w-4 h-4" />
