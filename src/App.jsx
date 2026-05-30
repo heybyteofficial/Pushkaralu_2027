@@ -1,6 +1,7 @@
 import { useState } from "react";
 import Home from "./pages/Home";
 import SosPage from "./pages/SosPage";
+import MissingPersonPage from "./pages/MissingPersonPage";
 import ProfilePage from "./pages/ProfilePage";
 import FamilyMembers from "./components/FamilyMembers";
 
@@ -9,6 +10,10 @@ function App() {
 
   if (currentScreen === "sos") {
     return <SosPage onBack={() => setCurrentScreen("home")} />;
+  }
+
+  if (currentScreen === "missing-child") {
+    return <MissingPersonPage onBack={() => setCurrentScreen("home")} />;
   }
 
   if (currentScreen === "profile") {

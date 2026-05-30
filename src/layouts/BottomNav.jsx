@@ -43,7 +43,7 @@ function BottomNav({ activeTab, onTabSelect }) {
       >
         <AlertTriangle className={`w-5 h-5 ${activeTab === "missing-child" ? "text-blue-600" : "text-gray-400 hover:text-gray-600"}`} />
         <span className={`text-[9px] font-bold mt-0.5 leading-none text-center ${activeTab === "missing-child" ? "text-blue-600" : "text-gray-400"}`}>
-          Missing Child
+          Missing
         </span>
       </button>
 
