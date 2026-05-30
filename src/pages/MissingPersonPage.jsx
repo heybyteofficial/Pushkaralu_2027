@@ -91,7 +91,7 @@ function MissingPersonPage({ onBack }) {
     }
   };
 
-  const startCamera = async () => {
+  const startCamera = async (facingMode = "environment") => {
     if (!navigator.mediaDevices?.getUserMedia) {
       setCameraError("Camera is not supported on this device or browser.");
       return;
@@ -100,9 +100,9 @@ function MissingPersonPage({ onBack }) {
     try {
       setCameraError("");
       setCameraMode(true);
-      setCaptureHint("Frame the face clearly and tap Capture");
+      setCaptureHint(facingMode === "user" ? "Frame the face clearly for a selfie and tap Capture" : "Frame the face clearly and tap Capture");
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: { ideal: "environment" } },
+        video: { facingMode: { ideal: facingMode } },
         audio: false,
       });
 
@@ -159,7 +159,13 @@ function MissingPersonPage({ onBack }) {
   const handleCameraOpen = async () => {
     setCameraError("");
     setCameraMode(true);
-    await startCamera();
+    await startCamera("environment");
+  };
+
+  const handleSelfieCam = async () => {
+    setCameraError("");
+    setCameraMode(true);
+    await startCamera("user");
   };
 
   const handleCapture = () => {
@@ -342,7 +348,7 @@ function MissingPersonPage({ onBack }) {
             </span>
           </div>
 
-          <div className="mt-4 grid grid-cols-2 gap-3">
+          <div className="mt-4 grid grid-cols-3 gap-3">
             <button
               type="button"
               onClick={handleCameraOpen}
@@ -352,6 +358,17 @@ function MissingPersonPage({ onBack }) {
                 <Camera className="w-5 h-5" />
               </div>
               <span className="text-[11px] font-black text-brand-900">Open Camera</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={handleSelfieCam}
+              className="rounded-[1.4rem] border border-emerald-100 bg-emerald-50 px-3 py-4 flex flex-col items-center justify-center gap-2 shadow-sm active:scale-[0.98] transition-all duration-300"
+            >
+              <div className="w-10 h-10 rounded-2xl bg-emerald-600 text-white flex items-center justify-center shadow-lg shadow-emerald-600/20">
+                <Camera className="w-5 h-5" />
+              </div>
+              <span className="text-[11px] font-black text-emerald-900">Selfie Cam</span>
             </button>
 
             <button
