@@ -206,7 +206,7 @@ function MissingPersonPage({ onBack }) {
         if (Array.isArray(parsed) && parsed.length > 0) {
           return parsed.map((member) => ({
             ...member,
-            phone: member.phone || member.idCardNumber || "Not provided",
+              phone: member.phone || "Not provided",
           }));
         }
       }
@@ -216,7 +216,7 @@ function MissingPersonPage({ onBack }) {
 
     return initialFamilyUsers.map((member) => ({
       ...member,
-      phone: member.phone || member.idCardNumber || "Not provided",
+      phone: member.phone || "Not provided",
     }));
   };
 
@@ -530,7 +530,7 @@ function MissingPersonPage({ onBack }) {
         )}
 
         {searchState === "matched" && matchedFamily && (
-          <section className="mt-4 rounded-[2rem] border border-emerald-200 bg-white p-4 shadow-[0_18px_45px_rgba(15,23,42,0.10)] transition-all duration-500 ease-out animate-pulse">
+          <section className="mt-4 rounded-[2rem] border border-emerald-200 bg-white p-4 shadow-[0_18px_45px_rgba(15,23,42,0.10)] transition-all duration-500 ease-out">
             <div className="flex items-start justify-between gap-3">
               <div>
                 <p className="text-[9px] font-black uppercase tracking-[0.18em] text-emerald-600">Match found</p>
@@ -579,7 +579,7 @@ function MissingPersonPage({ onBack }) {
                 </div>
                 <div className="flex items-center justify-between rounded-2xl bg-white px-3 py-2 border border-slate-200">
                   <span className="font-semibold text-slate-500">Contact Number</span>
-                  <span className="font-black text-slate-900">{matchedFamily.phone || matchedFamily.idCardNumber || "Not provided"}</span>
+                  <span className="font-black text-slate-900">{matchedFamily.phone || "Not provided"}</span>
                 </div>
                 <div className="flex items-center justify-between rounded-2xl bg-white px-3 py-2 border border-slate-200">
                   <span className="font-semibold text-slate-500">ID Number</span>

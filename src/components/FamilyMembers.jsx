@@ -622,7 +622,7 @@ function FamilyMembers({ onBack }) {
                       ID: {member.idCardNumber || "Not Provided"}
                     </p>
                     <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider mt-0.5">
-                      Phone: {member.phone || member.idCardNumber || "Not Provided"}
+                      Phone: {member.phone || "Not Provided"}
                     </p>
                   </div>
                 </div>
