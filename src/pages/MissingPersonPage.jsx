@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { motion } from "framer-motion";
 import {
   AlertTriangle,
   Camera,
@@ -35,6 +36,239 @@ const DEFAULT_FORM = {
   description: "",
 };
 
+const RADIAL_TICKS = Array.from({ length: 100 }, (_, index) => index);
+
+function ScanCard({ progress, stepIndex, phase }) {
+  const tickThreshold = Math.max(0, Math.min(100, progress));
+  const branches = [25, 50, 75];
+  const branchTopClasses = ["top-8", "top-16", "top-24"];
+  const steps = [
+    {
+      title: "Registry indexed",
+      description: "Preparing the scan and aligning the submitted photo.",
+    },
+    {
+      title: "Match candidates compared",
+      description: "Reviewing nearby registry records and visual markers.",
+    },
+    {
+      title: "Confidence evaluated",
+      description: "Measuring the closest verified family profile.",
+    },
+    {
+      title: "Result confirmed",
+      description: "Locking the best local match for review.",
+    },
+  ];
+  const centralValue = Math.round(progress);
+
+  const nodeProgressClass =
+    progress < 25 ? "opacity-35" : progress < 50 ? "opacity-60" : progress < 75 ? "opacity-80" : "opacity-100";
+
+  return (
+    <motion.section
+      layout
+      initial={{ opacity: 0, y: 12, filter: "blur(6px)" }}
+      animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+      transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
+      className="mt-4 relative w-full min-w-0 overflow-hidden rounded-[2rem] border border-slate-200/80 bg-white/85 p-4 shadow-[0_18px_45px_rgba(15,23,42,0.10)] backdrop-blur-xl"
+    >
+      <motion.div
+        aria-hidden="true"
+        className="absolute inset-0 bg-gradient-to-b from-sky-50/70 via-white/20 to-emerald-50/80"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: phase === "finishing" ? 1 : 0.55 }}
+        transition={{ duration: 0.6, ease: "easeOut" }}
+      />
+
+      <motion.div
+        aria-hidden="true"
+        className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-emerald-100/70 via-sky-100/20 to-transparent"
+        initial={{ scaleY: 0, transformOrigin: "bottom" }}
+        animate={{ scaleY: Math.max(0.2, Math.min(1, progress / 100)) }}
+        transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+      />
+
+      <div className="relative flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-[9px] font-black uppercase tracking-[0.18em] text-slate-500">Registry scan</p>
+          <h2 className="mt-1 text-sm font-black leading-snug text-slate-900 sm:text-[0.98rem]">
+            Reviewing the closest family match
+          </h2>
+        </div>
+        <motion.div
+          className="flex h-11 w-11 items-center justify-center rounded-full bg-brand-50 text-brand-700 shadow-sm"
+          animate={{ scale: phase === "finishing" ? [1, 1.08, 1] : 1 }}
+          transition={{ duration: 0.8, ease: "easeOut" }}
+        >
+          <Clock3 className="h-5 w-5" />
+        </motion.div>
+      </div>
+
+      <div className="relative mt-4 flex flex-col items-center gap-4">
+        <div className="flex w-full justify-center">
+          <div className="relative h-44 w-44 sm:h-48 sm:w-48">
+            <motion.div
+              className="absolute inset-5 rounded-full border border-brand-100 bg-white/80 shadow-inner backdrop-blur-md"
+              animate={{ scale: phase === "finishing" ? 1.03 : 1 }}
+              transition={{ duration: 0.6, ease: "easeOut" }}
+            />
+
+            <svg viewBox="0 0 220 220" className="absolute inset-0 h-full w-full -rotate-90">
+              <defs>
+                <linearGradient id="scanRingGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stopColor="#38bdf8" />
+                  <stop offset="100%" stopColor="#10b981" />
+                </linearGradient>
+              </defs>
+
+              {RADIAL_TICKS.map((tick) => {
+                const active = tick < tickThreshold;
+                const angle = (360 / RADIAL_TICKS.length) * tick;
+                const isMilestone = tick % 10 === 0;
+
+                return (
+                  <line
+                    key={tick}
+                    x1="110"
+                    y1="20"
+                    x2="110"
+                    y2={isMilestone ? "34" : "30"}
+                    stroke={active ? "url(#scanRingGradient)" : "#cbd5e1"}
+                    strokeWidth={isMilestone ? 3 : 2}
+                    strokeLinecap="round"
+                    opacity={active ? 1 : 0.4}
+                    transform={`rotate(${angle} 110 110)`}
+                    style={{ filter: active ? "drop-shadow(0 0 4px rgba(16,185,129,0.35))" : "none" }}
+                  />
+                );
+              })}
+
+              <circle cx="110" cy="110" r="72" fill="none" stroke="rgba(191,219,254,0.35)" strokeWidth="1" />
+              <circle cx="110" cy="110" r="60" fill="none" stroke="rgba(148,163,184,0.18)" strokeWidth="1" />
+            </svg>
+
+            <motion.div
+              className="scan-orb absolute left-1/2 top-1/2 flex h-24 w-24 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-white shadow-[0_16px_45px_rgba(59,130,246,0.14)]"
+              animate={{ scale: phase === "finishing" ? [1, 1.05, 1] : 1 }}
+              transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1], repeat: phase === "finishing" ? 0 : Infinity, repeatType: "mirror" }}
+            >
+              <div className="text-center">
+                <motion.div
+                  key={centralValue}
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.28, ease: "easeOut" }}
+                  className="text-2xl font-black tracking-tight text-slate-900"
+                >
+                  {centralValue}%
+                </motion.div>
+                <p className="mt-1 text-[9px] font-black uppercase tracking-[0.18em] text-slate-500">Match confidence</p>
+              </div>
+            </motion.div>
+
+            <motion.div
+              aria-hidden="true"
+              className="absolute inset-0 rounded-full"
+              animate={{ opacity: [0.25, 0.55, 0.25], scale: [0.98, 1.03, 0.98] }}
+              transition={{ duration: 2.8, ease: "easeInOut", repeat: Infinity }}
+              style={{
+                background:
+                  "radial-gradient(circle at 50% 50%, rgba(56,189,248,0.18) 0%, rgba(59,130,246,0.08) 34%, rgba(16,185,129,0.05) 60%, transparent 72%)",
+              }}
+            />
+          </div>
+        </div>
+
+        <div className="relative w-full min-w-0 rounded-[1.5rem] border border-slate-200/80 bg-white/80 p-3 backdrop-blur-md">
+          <div className="relative min-h-[11.5rem] overflow-hidden rounded-[1.2rem] border border-slate-100 bg-gradient-to-b from-slate-50 to-white p-3">
+            <div className="absolute left-6 top-8 bottom-8 w-px bg-gradient-to-b from-slate-200 via-sky-300 to-emerald-400/80" />
+
+            {branches.map((threshold, index) =>
+              progress >= threshold ? (
+                <motion.div
+                  key={threshold}
+                  initial={{ opacity: 0, x: -8, scaleX: 0.85 }}
+                  animate={{ opacity: 1, x: 0, scaleX: 1 }}
+                  transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
+                  className={`absolute left-6 ${branchTopClasses[index]} h-px w-[calc(100%-4rem)] origin-left bg-gradient-to-r from-sky-300 via-cyan-400 to-emerald-400`}
+                />
+              ) : null,
+            )}
+
+            <motion.div
+              className={`relative z-10 flex min-w-0 items-start gap-3 rounded-2xl border p-3 transition-all duration-500 ${
+                stepIndex === 0 ? "border-brand-100 bg-brand-50/70" : "border-slate-100 bg-white"
+              }`}
+              animate={{ boxShadow: stepIndex === 0 ? "0 0 0 1px rgba(59,130,246,0.14)" : "0 0 0 0 rgba(0,0,0,0)" }}
+            >
+              <div className={`mt-0.5 h-3 w-3 rounded-full ${progress > 10 ? "bg-brand-600" : "bg-slate-300"}`} />
+              <div>
+                <p className="text-[11px] font-black text-slate-900">{steps[0].title}</p>
+                <p className="mt-0.5 text-[10px] text-slate-500">{steps[0].description}</p>
+              </div>
+            </motion.div>
+
+            <motion.div
+              className={`relative z-10 mt-2 flex min-w-0 items-start gap-3 rounded-2xl border p-3 transition-all duration-500 ${
+                stepIndex === 1 ? "border-brand-100 bg-brand-50/70" : "border-slate-100 bg-white"
+              }`}
+            >
+              <div className={`mt-0.5 h-3 w-3 rounded-full ${progress > 35 ? "bg-brand-600" : "bg-slate-300"}`} />
+              <div>
+                <p className="text-[11px] font-black text-slate-900">{steps[1].title}</p>
+                <p className="mt-0.5 text-[10px] text-slate-500">{steps[1].description}</p>
+              </div>
+            </motion.div>
+
+            <motion.div
+              className={`relative z-10 mt-2 flex min-w-0 items-start gap-3 rounded-2xl border p-3 transition-all duration-500 ${
+                stepIndex === 2 ? "border-brand-100 bg-brand-50/70" : "border-slate-100 bg-white"
+              }`}
+            >
+              <div className={`mt-0.5 h-3 w-3 rounded-full ${progress > 60 ? "bg-brand-600" : "bg-slate-300"}`} />
+              <div>
+                <p className="text-[11px] font-black text-slate-900">{steps[2].title}</p>
+                <p className="mt-0.5 text-[10px] text-slate-500">{steps[2].description}</p>
+              </div>
+            </motion.div>
+
+            <motion.div
+              className={`relative z-10 mt-2 flex min-w-0 items-start gap-3 rounded-2xl border p-3 transition-all duration-500 ${
+                phase === "finishing"
+                  ? "border-emerald-100 bg-emerald-50/80"
+                  : "border-slate-100 bg-white"
+              }`}
+            >
+              <div className={`mt-0.5 h-3 w-3 rounded-full ${progress > 85 ? "bg-emerald-500" : "bg-slate-300"}`} />
+              <div>
+                <p className="text-[11px] font-black text-slate-900">{steps[3].title}</p>
+                <p className="mt-0.5 text-[10px] text-slate-500">{steps[3].description}</p>
+              </div>
+            </motion.div>
+          </div>
+        </div>
+      </div>
+
+      {phase === "finishing" && (
+        <motion.div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+        >
+          <motion.div
+            className="absolute inset-y-0 left-[-30%] w-[45%] bg-gradient-to-r from-transparent via-white/75 to-transparent"
+            animate={{ x: [0, 520] }}
+            transition={{ duration: 0.95, ease: [0.16, 1, 0.3, 1] }}
+          />
+        </motion.div>
+      )}
+    </motion.section>
+  );
+}
+
 
 
 function MissingPersonPage({ onBack }) {
@@ -55,12 +289,16 @@ function MissingPersonPage({ onBack }) {
   const [searchState, setSearchState] = useState("idle");
   const [searchStepIndex, setSearchStepIndex] = useState(0);
   const [matchedFamily, setMatchedFamily] = useState(null);
+  const [searchProgress, setSearchProgress] = useState(0);
+  const [scanPhase, setScanPhase] = useState("idle");
 
   const fileInputRef = useRef(null);
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
   const streamRef = useRef(null);
   const matchTimersRef = useRef([]);
+  const progressFrameRef = useRef(null);
+  const finishTimerRef = useRef(null);
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(reports));
@@ -77,6 +315,12 @@ function MissingPersonPage({ onBack }) {
   useEffect(() => {
     return () => {
       matchTimersRef.current.forEach((timerId) => window.clearTimeout(timerId));
+      if (progressFrameRef.current) {
+        window.cancelAnimationFrame(progressFrameRef.current);
+      }
+      if (finishTimerRef.current) {
+        window.clearTimeout(finishTimerRef.current);
+      }
     };
   }, []);
 
@@ -148,6 +392,8 @@ function MissingPersonPage({ onBack }) {
         setPhotoPreview(preview);
         setCaptureHint("Photo ready for report");
         setSearchState("idle");
+        setScanPhase("idle");
+        setSearchProgress(0);
         setMatchedFamily(null);
         setSearchStepIndex(0);
       }
@@ -189,6 +435,8 @@ function MissingPersonPage({ onBack }) {
     setCameraMode(false);
     setCaptureHint("Photo captured successfully");
     setSearchState("idle");
+    setScanPhase("idle");
+    setSearchProgress(0);
     setMatchedFamily(null);
     setSearchStepIndex(0);
   };
@@ -196,6 +444,16 @@ function MissingPersonPage({ onBack }) {
   const clearMatchTimers = () => {
     matchTimersRef.current.forEach((timerId) => window.clearTimeout(timerId));
     matchTimersRef.current = [];
+
+    if (progressFrameRef.current) {
+      window.cancelAnimationFrame(progressFrameRef.current);
+      progressFrameRef.current = null;
+    }
+
+    if (finishTimerRef.current) {
+      window.clearTimeout(finishTimerRef.current);
+      finishTimerRef.current = null;
+    }
   };
 
   const readFamilyRegistry = () => {
@@ -242,33 +500,62 @@ function MissingPersonPage({ onBack }) {
     setSearchState("loading");
     setSearchStepIndex(0);
     setMatchedFamily(null);
+    setSearchProgress(0);
+    setScanPhase("loading");
 
     const matched = pickClosestMatch(photoPreview);
-    const stepDurations = [1100, 1200, 1200, 900];
-    let elapsed = 0;
 
-    MATCH_STEPS.forEach((_, index) => {
-      elapsed += stepDurations[index] || 900;
-      const timerId = window.setTimeout(() => {
-        setSearchStepIndex(index);
-        if (index === MATCH_STEPS.length - 1) {
-          setMatchedFamily(matched);
-          setSearchState("matched");
-          setReports((prev) => [
-            {
-              id: String(Date.now()),
-              photo: photoPreview,
-              matchedName: matched?.name || "Unknown",
-              matchedRelation: matched?.relation || "Family",
-              createdAt: new Date().toISOString(),
-            },
-            ...prev,
-          ]);
-        }
-      }, elapsed);
+    const duration = 4700;
+    const startTime = performance.now();
 
-      matchTimersRef.current.push(timerId);
-    });
+    const easeOutExpo = (value) => {
+      if (value >= 1) return 1;
+      return 1 - 2 ** (-10 * value);
+    };
+
+    const frame = (now) => {
+      const rawProgress = Math.min(1, (now - startTime) / duration);
+      const easedProgress = easeOutExpo(rawProgress);
+      const nextProgress = Math.round(easedProgress * 100);
+
+      setSearchProgress(nextProgress);
+
+      if (nextProgress < 25) {
+        setSearchStepIndex(0);
+      } else if (nextProgress < 50) {
+        setSearchStepIndex(1);
+      } else if (nextProgress < 75) {
+        setSearchStepIndex(2);
+      } else if (nextProgress < 100) {
+        setSearchStepIndex(3);
+      }
+
+      if (rawProgress < 1) {
+        progressFrameRef.current = window.requestAnimationFrame(frame);
+        return;
+      }
+
+      setSearchProgress(100);
+      setSearchStepIndex(3);
+      setScanPhase("finishing");
+
+      finishTimerRef.current = window.setTimeout(() => {
+        setMatchedFamily(matched);
+        setSearchState("matched");
+        setReports((prev) => [
+          {
+            id: String(Date.now()),
+            photo: photoPreview,
+            matchedName: matched?.name || "Unknown",
+            matchedRelation: matched?.relation || "Family",
+            createdAt: new Date().toISOString(),
+          },
+          ...prev,
+        ]);
+      }, 650);
+    };
+
+    progressFrameRef.current = window.requestAnimationFrame(frame);
   };
 
   const handleClearPhoto = () => {
@@ -276,6 +563,8 @@ function MissingPersonPage({ onBack }) {
     setCaptureHint("Upload or capture a clear face photo");
     setCameraError("");
     setSearchState("idle");
+    setScanPhase("idle");
+    setSearchProgress(0);
     setSearchStepIndex(0);
     setMatchedFamily(null);
   };
@@ -474,63 +763,17 @@ function MissingPersonPage({ onBack }) {
           </section>
         )}
 
-        {searchState === "loading" && (
-          <section className="mt-4 rounded-[2rem] border border-slate-200 bg-white p-4 shadow-[0_18px_45px_rgba(15,23,42,0.10)] transition-all duration-500 ease-out">
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <p className="text-[9px] font-black uppercase tracking-[0.18em] text-slate-500">Database scan</p>
-                <h2 className="mt-1 text-sm font-black text-slate-900">Finding the closest family match</h2>
-              </div>
-              <div className="flex h-11 w-11 items-center justify-center rounded-full bg-brand-50 text-brand-700 shadow-sm">
-                <Clock3 className="h-5 w-5 animate-pulse" />
-              </div>
-            </div>
-
-            <div className="mt-4 flex flex-col gap-3">
-              {MATCH_STEPS.map((step, index) => {
-                const isComplete = index < searchStepIndex;
-                const isActive = index === searchStepIndex;
-
-                return (
-                  <div
-                    key={step}
-                    className={`flex items-center gap-3 rounded-2xl border p-3 transition-all duration-300 ${
-                      isComplete || isActive
-                        ? "border-brand-100 bg-brand-50/70"
-                        : "border-slate-200 bg-slate-50"
-                    }`}
-                  >
-                    <div
-                      className={`flex h-8 w-8 items-center justify-center rounded-full text-[10px] font-black ${
-                        isComplete
-                          ? "bg-emerald-500 text-white"
-                          : isActive
-                          ? "bg-brand-700 text-white animate-pulse"
-                          : "bg-white text-slate-400 border border-slate-200"
-                      }`}
-                    >
-                      {index + 1}
-                    </div>
-                    <div className="flex-1 text-left">
-                      <p className="text-[11px] font-black text-slate-900">{step}</p>
-                      <p className="mt-0.5 text-[10px] font-medium text-slate-500">
-                        {isActive
-                          ? "Running local search against the family registry"
-                          : isComplete
-                          ? "Completed"
-                          : "Waiting in queue"}
-                      </p>
-                    </div>
-                    {isComplete ? <CheckCircle2 className="h-4 w-4 text-emerald-500" /> : null}
-                  </div>
-                );
-              })}
-            </div>
-          </section>
+        {(searchState === "loading" || scanPhase === "finishing") && (
+          <ScanCard progress={searchProgress} stepIndex={searchStepIndex} phase={scanPhase} />
         )}
 
         {searchState === "matched" && matchedFamily && (
-          <section className="mt-4 rounded-[2rem] border border-emerald-200 bg-white p-4 shadow-[0_18px_45px_rgba(15,23,42,0.10)] transition-all duration-500 ease-out">
+          <motion.section
+            initial={{ opacity: 0, y: 14, filter: "blur(6px)" }}
+            animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+            transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
+            className="mt-4 rounded-[2rem] border border-emerald-200 bg-white p-4 shadow-[0_18px_45px_rgba(15,23,42,0.10)]"
+          >
             <div className="flex items-start justify-between gap-3">
               <div>
                 <p className="text-[9px] font-black uppercase tracking-[0.18em] text-emerald-600">Match found</p>
@@ -587,10 +830,10 @@ function MissingPersonPage({ onBack }) {
                 </div>
               </div>
             </div>
-          </section>
+          </motion.section>
         )}
 
-        <section className="mt-4 rounded-[2rem] border border-slate-200 bg-white p-4 shadow-[0_18px_45px_rgba(15,23,42,0.10)]">
+        <section className="mt-4 rounded-[2rem] border border-slate-200 bg-white p-4 shadow-[0_18px_45px_rgba(15,23,42,0.10)] transition-all duration-700 ease-out">
           <div className="flex items-center justify-between gap-2">
             <div>
               <p className="text-[9px] font-black uppercase tracking-[0.18em] text-slate-500">Recent reports</p>
