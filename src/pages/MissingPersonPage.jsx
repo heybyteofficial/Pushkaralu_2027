@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   AlertTriangle,
   Camera,
@@ -14,6 +14,7 @@ import {
   X,
 } from "lucide-react";
 import Navbar from "../layouts/Navbar";
+import apLogo from "@/assets/ap-govt-logo.png";
 import { users as initialFamilyUsers } from "../data/family";
 
 const STORAGE_KEY = "pushkaralu_missing_reports";
@@ -42,21 +43,22 @@ function ScanCard({ progress, stepIndex, phase }) {
   const tickThreshold = Math.max(0, Math.min(100, progress));
   const branches = [25, 50, 75];
   const branchTopClasses = ["top-8", "top-16", "top-24"];
+  const stepRevealThresholds = [1, 25, 50, 75];
   const steps = [
     {
-      title: "Registry indexed",
+      title: "Application initialized",
       description: "Preparing the scan and aligning the submitted photo.",
     },
     {
-      title: "Match candidates compared",
+      title: "Finding matches",
       description: "Reviewing nearby registry records and visual markers.",
     },
     {
-      title: "Confidence evaluated",
+      title: "Getting closest matches",
       description: "Measuring the closest verified family profile.",
     },
     {
-      title: "Result confirmed",
+      title: "Match found",
       description: "Locking the best local match for review.",
     },
   ];
@@ -109,10 +111,18 @@ function ScanCard({ progress, stepIndex, phase }) {
         <div className="flex w-full justify-center">
           <div className="relative h-44 w-44 sm:h-48 sm:w-48">
             <motion.div
-              className="absolute inset-5 rounded-full border border-brand-100 bg-white/80 shadow-inner backdrop-blur-md"
+              className="absolute inset-5 flex items-center justify-center overflow-hidden rounded-full border border-brand-100 bg-white/80 shadow-inner backdrop-blur-md"
               animate={{ scale: phase === "finishing" ? 1.03 : 1 }}
               transition={{ duration: 0.6, ease: "easeOut" }}
-            />
+            >
+              <motion.img
+                src={apLogo}
+                alt="Andhra Pradesh Emblem"
+                className="h-24 w-24 object-contain"
+                animate={{ opacity: [0.8, 1, 0.8] }}
+                transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+              />
+            </motion.div>
 
             <svg viewBox="0 0 220 220" className="absolute inset-0 h-full w-full -rotate-90">
               <defs>
@@ -151,7 +161,7 @@ function ScanCard({ progress, stepIndex, phase }) {
             <motion.div
               className="scan-orb absolute left-1/2 top-1/2 flex h-24 w-24 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-white shadow-[0_16px_45px_rgba(59,130,246,0.14)]"
               animate={{ scale: phase === "finishing" ? [1, 1.05, 1] : 1 }}
-              transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1], repeat: phase === "finishing" ? 0 : Infinity, repeatType: "mirror" }}
+              transition={{ duration: 3.5, ease: [0.16, 1, 0.3, 1], repeat: phase === "finishing" ? 0 : Infinity, repeatType: "mirror" }}
             >
               <div className="text-center">
                 <motion.div
@@ -200,7 +210,13 @@ function ScanCard({ progress, stepIndex, phase }) {
               className={`relative z-10 flex min-w-0 items-start gap-3 rounded-2xl border p-3 transition-all duration-500 ${
                 stepIndex === 0 ? "border-brand-100 bg-brand-50/70" : "border-slate-100 bg-white"
               }`}
-              animate={{ boxShadow: stepIndex === 0 ? "0 0 0 1px rgba(59,130,246,0.14)" : "0 0 0 0 rgba(0,0,0,0)" }}
+              initial={{ opacity: 0, y: 14 }}
+              animate={{
+                opacity: progress >= stepRevealThresholds[0] ? 1 : 0,
+                y: progress >= stepRevealThresholds[0] ? 0 : 14,
+                boxShadow: stepIndex === 0 ? "0 0 0 1px rgba(59,130,246,0.14)" : "0 0 0 0 rgba(0,0,0,0)",
+              }}
+              transition={{ duration: 0.75, delay: 0.04, ease: [0.16, 1, 0.3, 1] }}
             >
               <div className={`mt-0.5 h-3 w-3 rounded-full ${progress > 10 ? "bg-brand-600" : "bg-slate-300"}`} />
               <div>
@@ -213,6 +229,12 @@ function ScanCard({ progress, stepIndex, phase }) {
               className={`relative z-10 mt-2 flex min-w-0 items-start gap-3 rounded-2xl border p-3 transition-all duration-500 ${
                 stepIndex === 1 ? "border-brand-100 bg-brand-50/70" : "border-slate-100 bg-white"
               }`}
+              initial={{ opacity: 0, y: 14 }}
+              animate={{
+                opacity: progress >= stepRevealThresholds[1] ? 1 : 0,
+                y: progress >= stepRevealThresholds[1] ? 0 : 14,
+              }}
+              transition={{ duration: 0.75, delay: 0.12, ease: [0.16, 1, 0.3, 1] }}
             >
               <div className={`mt-0.5 h-3 w-3 rounded-full ${progress > 35 ? "bg-brand-600" : "bg-slate-300"}`} />
               <div>
@@ -225,6 +247,12 @@ function ScanCard({ progress, stepIndex, phase }) {
               className={`relative z-10 mt-2 flex min-w-0 items-start gap-3 rounded-2xl border p-3 transition-all duration-500 ${
                 stepIndex === 2 ? "border-brand-100 bg-brand-50/70" : "border-slate-100 bg-white"
               }`}
+              initial={{ opacity: 0, y: 14 }}
+              animate={{
+                opacity: progress >= stepRevealThresholds[2] ? 1 : 0,
+                y: progress >= stepRevealThresholds[2] ? 0 : 14,
+              }}
+              transition={{ duration: 0.75, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
             >
               <div className={`mt-0.5 h-3 w-3 rounded-full ${progress > 60 ? "bg-brand-600" : "bg-slate-300"}`} />
               <div>
@@ -239,6 +267,12 @@ function ScanCard({ progress, stepIndex, phase }) {
                   ? "border-emerald-100 bg-emerald-50/80"
                   : "border-slate-100 bg-white"
               }`}
+              initial={{ opacity: 0, y: 14 }}
+              animate={{
+                opacity: phase === "finishing" ? 1 : 0,
+                y: phase === "finishing" ? 0 : 14,
+              }}
+              transition={{ duration: 0.9, delay: 0.28, ease: [0.16, 1, 0.3, 1] }}
             >
               <div className={`mt-0.5 h-3 w-3 rounded-full ${progress > 85 ? "bg-emerald-500" : "bg-slate-300"}`} />
               <div>
@@ -269,8 +303,6 @@ function ScanCard({ progress, stepIndex, phase }) {
   );
 }
 
-
-
 function MissingPersonPage({ onBack }) {
   const [reports, setReports] = useState(() => {
     try {
@@ -299,6 +331,9 @@ function MissingPersonPage({ onBack }) {
   const matchTimersRef = useRef([]);
   const progressFrameRef = useRef(null);
   const finishTimerRef = useRef(null);
+  const scanCardRef = useRef(null);
+  const matchedCardRef = useRef(null);
+  const autoScrollStageRef = useRef("idle");
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(reports));
@@ -323,6 +358,38 @@ function MissingPersonPage({ onBack }) {
       }
     };
   }, []);
+
+  useEffect(() => {
+    // Instead of auto-scrolling, focus the in-place containers without moving
+    if ((searchState === "loading" || scanPhase === "finishing") && autoScrollStageRef.current !== "scan") {
+      autoScrollStageRef.current = "scan";
+      window.setTimeout(() => {
+        try {
+          scanCardRef.current?.focus({ preventScroll: true });
+        } catch (e) {
+          // fallback for older browsers
+          if (scanCardRef.current) scanCardRef.current.focus();
+        }
+      }, 180);
+      return;
+    }
+
+    if (searchState === "matched" && matchedFamily && autoScrollStageRef.current !== "result") {
+      autoScrollStageRef.current = "result";
+      window.setTimeout(() => {
+        try {
+          matchedCardRef.current?.focus({ preventScroll: true });
+        } catch (e) {
+          if (matchedCardRef.current) matchedCardRef.current.focus();
+        }
+      }, 220);
+      return;
+    }
+
+    if (searchState === "idle") {
+      autoScrollStageRef.current = "idle";
+    }
+  }, [matchedFamily, scanPhase, searchState]);
 
   const stopCamera = () => {
     if (streamRef.current) {
@@ -505,7 +572,7 @@ function MissingPersonPage({ onBack }) {
 
     const matched = pickClosestMatch(photoPreview);
 
-    const duration = 4700;
+    const duration = 7600;
     const startTime = performance.now();
 
     const easeOutExpo = (value) => {
@@ -539,20 +606,20 @@ function MissingPersonPage({ onBack }) {
       setSearchStepIndex(3);
       setScanPhase("finishing");
 
-      finishTimerRef.current = window.setTimeout(() => {
-        setMatchedFamily(matched);
-        setSearchState("matched");
-        setReports((prev) => [
-          {
-            id: String(Date.now()),
-            photo: photoPreview,
-            matchedName: matched?.name || "Unknown",
-            matchedRelation: matched?.relation || "Family",
-            createdAt: new Date().toISOString(),
-          },
-          ...prev,
-        ]);
-      }, 650);
+      // Immediately show the matched view as soon as progress reaches 100%
+      finishTimerRef.current = null;
+      setMatchedFamily(matched);
+      setSearchState("matched");
+      setReports((prev) => [
+        {
+          id: String(Date.now()),
+          photo: photoPreview,
+          matchedName: matched?.name || "Unknown",
+          matchedRelation: matched?.relation || "Family",
+          createdAt: new Date().toISOString(),
+        },
+        ...prev,
+      ]);
     };
 
     progressFrameRef.current = window.requestAnimationFrame(frame);
@@ -625,7 +692,8 @@ function MissingPersonPage({ onBack }) {
           </div>
         )}
 
-        <section className="mt-4 rounded-[2rem] border border-slate-200 bg-white backdrop-blur-xl p-4 shadow-[0_18px_45px_rgba(15,23,42,0.10)]">
+        {(searchState !== "loading" && scanPhase !== "finishing" && searchState !== "matched") && (
+          <section className="mt-4 rounded-[2rem] border border-slate-200 bg-white backdrop-blur-xl p-4 shadow-[0_18px_45px_rgba(15,23,42,0.10)]">
           <div className="flex items-center justify-between gap-2">
             <div>
               <p className="text-[9px] font-black uppercase tracking-[0.18em] text-slate-500">Photo section</p>
@@ -671,7 +739,6 @@ function MissingPersonPage({ onBack }) {
               <span className="text-[11px] font-black text-slate-800">Upload Photo</span>
             </button>
           </div>
-
           <p className="mt-3 text-[10px] font-semibold text-slate-500">{captureHint}</p>
 
           <input
@@ -736,9 +803,10 @@ function MissingPersonPage({ onBack }) {
               </button>
             </div>
           )}
-        </section>
+          </section>
+        )}
 
-        {photoPreview && (
+          {photoPreview && (searchState !== "loading" && scanPhase !== "finishing" && searchState !== "matched") && (
           <section className="mt-4 rounded-[2rem] border border-slate-200 bg-white p-4 shadow-[0_18px_45px_rgba(15,23,42,0.10)] transition-all duration-500 ease-out">
             <div className="flex items-center justify-between gap-2">
               <div>
@@ -761,77 +829,107 @@ function MissingPersonPage({ onBack }) {
               {searchState === "loading" ? "Searching..." : "Submit Photo"}
             </button>
           </section>
-        )}
+          )}
 
-        {(searchState === "loading" || scanPhase === "finishing") && (
-          <ScanCard progress={searchProgress} stepIndex={searchStepIndex} phase={scanPhase} />
-        )}
-
-        {searchState === "matched" && matchedFamily && (
-          <motion.section
-            initial={{ opacity: 0, y: 14, filter: "blur(6px)" }}
-            animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-            transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
-            className="mt-4 rounded-[2rem] border border-emerald-200 bg-white p-4 shadow-[0_18px_45px_rgba(15,23,42,0.10)]"
-          >
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <p className="text-[9px] font-black uppercase tracking-[0.18em] text-emerald-600">Match found</p>
-                <h2 className="mt-1 text-sm font-black text-slate-900">Closest registry match located</h2>
+        <AnimatePresence mode="sync" initial={false}>
+          {(searchProgress < 100 && (searchState === "loading" || scanPhase === "finishing")) && (
+            <motion.div
+              key="scan"
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
+            >
+              <div
+                ref={scanCardRef}
+                tabIndex={-1}
+                role="status"
+                aria-live="polite"
+                aria-atomic="true"
+                aria-busy={searchState === "loading" || scanPhase === "finishing"}
+              >
+                <span className="sr-only" aria-live="polite">Scanning {searchProgress}%</span>
+                {searchProgress === 100 && <span className="sr-only" aria-live="polite">Scan complete — preparing match</span>}
+                <ScanCard progress={searchProgress} stepIndex={searchStepIndex} phase={scanPhase} />
               </div>
-              <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.14em] text-emerald-700">
-                Verified local match
-              </span>
-            </div>
+            </motion.div>
+          )}
 
-            <div className="mt-4 grid grid-cols-2 gap-3">
-              <div className="rounded-[1.5rem] border border-slate-200 bg-slate-50 p-3">
-                <p className="text-[9px] font-black uppercase tracking-[0.16em] text-slate-500">Recently captured</p>
-                <img
-                  src={photoPreview}
-                  alt="Recently captured missing person"
-                  className="mt-2 h-40 w-full rounded-2xl object-cover border border-white shadow-sm"
-                />
-              </div>
+          {searchState === "matched" && matchedFamily && (
+            <motion.div
+              key="matched"
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
+            >
+              <section
+                ref={matchedCardRef}
+                tabIndex={-1}
+                role="region"
+                aria-live="polite"
+                className="mt-4 rounded-[2rem] border border-emerald-200 bg-white p-4 shadow-[0_18px_45px_rgba(15,23,42,0.10)]"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="text-[9px] font-black uppercase tracking-[0.18em] text-emerald-600">Match found</p>
+                    <h2 className="mt-1 text-sm font-black text-slate-900">Closest registry match located</h2>
+                  </div>
+                  <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.14em] text-emerald-700">
+                    Verified local match
+                  </span>
+                </div>
 
-              <div className="rounded-[1.5rem] border border-slate-200 bg-slate-50 p-3">
-                <p className="text-[9px] font-black uppercase tracking-[0.16em] text-slate-500">Database image</p>
-                <img
-                  src={matchedFamily.avatar}
-                  alt={matchedFamily.name}
-                  className="mt-2 h-40 w-full rounded-2xl object-cover border border-white shadow-sm"
-                />
-              </div>
-            </div>
+                <div className="mt-4 grid grid-cols-2 gap-3">
+                  <div className="rounded-[1.5rem] border border-slate-200 bg-slate-50 p-3">
+                    <p className="text-[9px] font-black uppercase tracking-[0.16em] text-slate-500">Recently captured</p>
+                    <img
+                      src={photoPreview}
+                      alt="Recently captured missing person"
+                      className="mt-2 h-40 w-full rounded-2xl object-cover border border-white shadow-sm"
+                    />
+                  </div>
 
-            <div className="mt-4 rounded-[1.5rem] border border-slate-200 bg-slate-50 p-4">
-              <div className="flex items-center justify-between gap-2">
-                <div>
-                  <p className="text-[9px] font-black uppercase tracking-[0.16em] text-slate-500">Family contact details</p>
-                  <h3 className="mt-1 text-base font-black text-slate-900">{matchedFamily.name}</h3>
+                  <div className="rounded-[1.5rem] border border-slate-200 bg-slate-50 p-3">
+                    <p className="text-[9px] font-black uppercase tracking-[0.16em] text-slate-500">Database image</p>
+                    <img
+                      src={matchedFamily.avatar}
+                      alt={matchedFamily.name}
+                      className="mt-2 h-40 w-full rounded-2xl object-cover border border-white shadow-sm"
+                    />
+                  </div>
                 </div>
-                <div className="rounded-full bg-brand-50 px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.14em] text-brand-700 border border-brand-100">
-                  {Math.min(99, 88 + (matchedFamily.name.length % 10))}% match
-                </div>
-              </div>
 
-              <div className="mt-3 grid gap-2 text-[11px]">
-                <div className="flex items-center justify-between rounded-2xl bg-white px-3 py-2 border border-slate-200">
-                  <span className="font-semibold text-slate-500">Relation</span>
-                  <span className="font-black text-slate-900">{matchedFamily.relation}</span>
+                <div className="mt-4 rounded-[1.5rem] border border-slate-200 bg-slate-50 p-4">
+                  <div className="flex items-center justify-between gap-2">
+                    <div>
+                      <p className="text-[9px] font-black uppercase tracking-[0.16em] text-slate-500">Family contact details</p>
+                      <h3 className="mt-1 text-base font-black text-slate-900">{matchedFamily.name}</h3>
+                    </div>
+                    <div className="rounded-full bg-brand-50 px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.14em] text-brand-700 border border-brand-100">
+                      {Math.min(99, 88 + (matchedFamily.name.length % 10))}% match
+                    </div>
+                  </div>
+
+                  <div className="mt-3 grid gap-2 text-[11px]">
+                    <div className="flex items-center justify-between rounded-2xl bg-white px-3 py-2 border border-slate-200">
+                      <span className="font-semibold text-slate-500">Relation</span>
+                      <span className="font-black text-slate-900">{matchedFamily.relation}</span>
+                    </div>
+                    <div className="flex items-center justify-between rounded-2xl bg-white px-3 py-2 border border-slate-200">
+                      <span className="font-semibold text-slate-500">Contact Number</span>
+                      <span className="font-black text-slate-900">{matchedFamily.phone || "Not provided"}</span>
+                    </div>
+                    <div className="flex items-center justify-between rounded-2xl bg-white px-3 py-2 border border-slate-200">
+                      <span className="font-semibold text-slate-500">ID Number</span>
+                      <span className="font-black text-slate-900">{matchedFamily.idCardNumber || "Not provided"}</span>
+                    </div>
+                  </div>
                 </div>
-                <div className="flex items-center justify-between rounded-2xl bg-white px-3 py-2 border border-slate-200">
-                  <span className="font-semibold text-slate-500">Contact Number</span>
-                  <span className="font-black text-slate-900">{matchedFamily.phone || "Not provided"}</span>
-                </div>
-                <div className="flex items-center justify-between rounded-2xl bg-white px-3 py-2 border border-slate-200">
-                  <span className="font-semibold text-slate-500">ID Number</span>
-                  <span className="font-black text-slate-900">{matchedFamily.idCardNumber || "Not provided"}</span>
-                </div>
-              </div>
-            </div>
-          </motion.section>
-        )}
+              </section>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         <section className="mt-4 rounded-[2rem] border border-slate-200 bg-white p-4 shadow-[0_18px_45px_rgba(15,23,42,0.10)] transition-all duration-700 ease-out">
           <div className="flex items-center justify-between gap-2">
