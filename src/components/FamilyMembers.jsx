@@ -23,6 +23,7 @@ const DEFAULT_FORM_DATA = {
   age: "",
   gender: "",
   idCardNumber: "",
+  phone: "",
 };
 
 function FamilyMembers({ onBack }) {
@@ -272,6 +273,7 @@ function FamilyMembers({ onBack }) {
       age: Number(formData.age),
       gender: formData.gender,
       idCardNumber: formData.idCardNumber.trim() || "Not Provided",
+      phone: formData.phone.trim() || formData.idCardNumber.trim() || "Not Provided",
       avatar:
         capturedImage ||
         "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&auto=format&fit=crop&q=80",
@@ -487,6 +489,20 @@ function FamilyMembers({ onBack }) {
                 />
               </div>
 
+              <div className="flex flex-col gap-1">
+                <label htmlFor="member-phone" className="text-[11px] font-bold text-slate-700">
+                  Contact Number (Optional)
+                </label>
+                <input
+                  id="member-phone"
+                  name="phone"
+                  value={formData.phone}
+                  onChange={handleFormChange}
+                  className="h-10 rounded-xl border border-slate-200 bg-slate-50 px-3 text-[11px] font-semibold text-slate-700 outline-none focus:ring-2 focus:ring-brand-100 focus:border-brand-300"
+                  placeholder="Enter phone number"
+                />
+              </div>
+
               <div className="grid grid-cols-2 gap-3 pt-1">
                 <button
                   type="button"
@@ -604,6 +620,9 @@ function FamilyMembers({ onBack }) {
                     </p>
                     <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider mt-0.5">
                       ID: {member.idCardNumber || "Not Provided"}
+                    </p>
+                    <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider mt-0.5">
+                      Phone: {member.phone || member.idCardNumber || "Not Provided"}
                     </p>
                   </div>
                 </div>

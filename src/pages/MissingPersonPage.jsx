@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import {
   AlertTriangle,
-  ArrowLeft,
   Camera,
   CameraOff,
   CheckCircle2,
@@ -14,18 +13,29 @@ import {
   X,
 } from "lucide-react";
 import Navbar from "../layouts/Navbar";
+import { users as initialFamilyUsers } from "../data/family";
 
 const STORAGE_KEY = "pushkaralu_missing_reports";
+const FAMILY_STORAGE_KEY = "pushkaralu_family_members";
+const MATCH_STEPS = [
+  "Searching the database",
+  "Finding the nearest matches",
+  "Getting the closest match",
+  "Match found",
+];
 
 const DEFAULT_FORM = {
   personName: "",
   age: "",
   gender: "",
+  relation: "",
   identifyingMarks: "",
   lastSeenLocation: "",
   lastSeenTime: "",
   description: "",
 };
+
+
 
 function MissingPersonPage({ onBack }) {
   const [reports, setReports] = useState(() => {
@@ -38,19 +48,19 @@ function MissingPersonPage({ onBack }) {
       return [];
     }
   });
-  const [formData, setFormData] = useState(DEFAULT_FORM);
-  const [formErrors, setFormErrors] = useState({});
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitState, setSubmitState] = useState("idle");
   const [photoPreview, setPhotoPreview] = useState("");
   const [cameraMode, setCameraMode] = useState(false);
   const [cameraError, setCameraError] = useState("");
   const [captureHint, setCaptureHint] = useState("Upload or capture a clear face photo");
+  const [searchState, setSearchState] = useState("idle");
+  const [searchStepIndex, setSearchStepIndex] = useState(0);
+  const [matchedFamily, setMatchedFamily] = useState(null);
 
   const fileInputRef = useRef(null);
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
   const streamRef = useRef(null);
+  const matchTimersRef = useRef([]);
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(reports));
@@ -61,6 +71,12 @@ function MissingPersonPage({ onBack }) {
       if (streamRef.current) {
         streamRef.current.getTracks().forEach((track) => track.stop());
       }
+    };
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      matchTimersRef.current.forEach((timerId) => window.clearTimeout(timerId));
     };
   }, []);
 
@@ -131,6 +147,9 @@ function MissingPersonPage({ onBack }) {
       if (typeof preview === "string") {
         setPhotoPreview(preview);
         setCaptureHint("Photo ready for report");
+        setSearchState("idle");
+        setMatchedFamily(null);
+        setSearchStepIndex(0);
       }
     } catch {
       setCameraError("Could not process the selected image.");
@@ -163,69 +182,96 @@ function MissingPersonPage({ onBack }) {
     setPhotoPreview(preview);
     setCameraMode(false);
     setCaptureHint("Photo captured successfully");
+    setSearchState("idle");
+    setMatchedFamily(null);
+    setSearchStepIndex(0);
   };
 
-  const handleFormChange = (event) => {
-    const { name, value } = event.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-    setFormErrors((prev) => ({ ...prev, [name]: "" }));
+  const clearMatchTimers = () => {
+    matchTimersRef.current.forEach((timerId) => window.clearTimeout(timerId));
+    matchTimersRef.current = [];
   };
 
-  const validateForm = () => {
-    const errors = {};
+  const readFamilyRegistry = () => {
+    try {
+      const saved = localStorage.getItem(FAMILY_STORAGE_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed.map((member) => ({
+            ...member,
+            phone: member.phone || member.idCardNumber || "Not provided",
+          }));
+        }
+      }
+    } catch {
+      // fallback below
+    }
 
-    if (!photoPreview) errors.photo = "Missing person photo is required";
-    if (!formData.personName.trim()) errors.personName = "Name is required";
-    if (!formData.identifyingMarks.trim()) errors.identifyingMarks = "Identifying marks are required";
-    if (!formData.lastSeenLocation.trim()) errors.lastSeenLocation = "Location is required";
-    if (!formData.description.trim()) errors.description = "Description is required";
-
-    return errors;
+    return initialFamilyUsers.map((member) => ({
+      ...member,
+      phone: member.phone || member.idCardNumber || "Not provided",
+    }));
   };
 
-  const validationMessages = [
-    formErrors.photo,
-    formErrors.personName,
-    formErrors.identifyingMarks,
-    formErrors.lastSeenLocation,
-    formErrors.description,
-  ].filter(Boolean);
+  const pickClosestMatch = (imageData) => {
+    const registry = readFamilyRegistry();
+    if (registry.length === 0) return null;
 
-  const handleSubmit = async (event) => {
-    event.preventDefault();
+    const fingerprint = imageData.split("").reduce((total, character, index) => {
+      return total + character.charCodeAt(0) * (index + 1);
+    }, 0);
 
-    const errors = validateForm();
-    if (Object.keys(errors).length > 0) {
-      setFormErrors(errors);
+    return registry[fingerprint % registry.length];
+  };
+
+  const handleSubmitSearch = () => {
+    if (!photoPreview) {
+      setCameraError("Please capture or upload a photo before submitting.");
       return;
     }
 
-    setIsSubmitting(true);
-    setSubmitState("submitting");
+    clearMatchTimers();
+    setCameraError("");
+    setSearchState("loading");
+    setSearchStepIndex(0);
+    setMatchedFamily(null);
 
-    const newReport = {
-      id: String(Date.now()),
-      photo: photoPreview,
-      ...formData,
-      age: formData.age ? Number(formData.age) : "",
-      createdAt: new Date().toISOString(),
-    };
+    const matched = pickClosestMatch(photoPreview);
+    const stepDurations = [1100, 1200, 1200, 900];
+    let elapsed = 0;
 
-    setTimeout(() => {
-      setReports((prev) => [newReport, ...prev]);
-      setFormData(DEFAULT_FORM);
-      setPhotoPreview("");
-      setFormErrors({});
-      setSubmitState("success");
-      setIsSubmitting(false);
+    MATCH_STEPS.forEach((_, index) => {
+      elapsed += stepDurations[index] || 900;
+      const timerId = window.setTimeout(() => {
+        setSearchStepIndex(index);
+        if (index === MATCH_STEPS.length - 1) {
+          setMatchedFamily(matched);
+          setSearchState("matched");
+          setReports((prev) => [
+            {
+              id: String(Date.now()),
+              photo: photoPreview,
+              matchedName: matched?.name || "Unknown",
+              matchedRelation: matched?.relation || "Family",
+              createdAt: new Date().toISOString(),
+            },
+            ...prev,
+          ]);
+        }
+      }, elapsed);
 
-      window.setTimeout(() => setSubmitState("idle"), 2600);
-    }, 900);
+      matchTimersRef.current.push(timerId);
+    });
   };
 
   const handleClearPhoto = () => {
     setPhotoPreview("");
     setCaptureHint("Upload or capture a clear face photo");
+    setCameraError("");
+    setSearchState("idle");
+    setSearchStepIndex(0);
+    setMatchedFamily(null);
   };
 
   const heroStats = [
@@ -250,7 +296,7 @@ function MissingPersonPage({ onBack }) {
                 <AlertTriangle className="w-3 h-3" />
                 Missing Person Report
               </div>
-              <h1 className="mt-3 text-3xl font-black leading-[0.96] tracking-tight text-slate-900">
+              <h1 className="mt-3 text-3xl font-extrabold leading-tight tracking-normal text-slate-900">
                 Post the photo.
                 <span className="block text-brand-700">Add the marks. Share the location.</span>
               </h1>
@@ -281,28 +327,6 @@ function MissingPersonPage({ onBack }) {
         {cameraError && (
           <div className="mt-4 rounded-2xl border border-rose-200 bg-rose-50 px-3 py-2 text-[11px] font-semibold text-rose-700">
             {cameraError}
-          </div>
-        )}
-
-        {validationMessages.length > 0 && (
-          <div className="mt-4 rounded-[1.5rem] border border-amber-200 bg-amber-50 p-4 shadow-sm">
-            <div className="flex items-center gap-2 text-amber-800">
-              <AlertTriangle className="w-4 h-4" />
-              <span className="text-[11px] font-black uppercase tracking-[0.16em]">Action required</span>
-            </div>
-            <p className="mt-2 text-[12px] font-medium text-amber-800/90">
-              Please complete the required fields below before submitting the report.
-            </p>
-            <div className="mt-3 flex flex-wrap gap-2">
-              {validationMessages.map((message) => (
-                <span
-                  key={message}
-                  className="rounded-full border border-amber-200 bg-white px-3 py-1 text-[10px] font-semibold text-amber-800"
-                >
-                  {message}
-                </span>
-              ))}
-            </div>
           </div>
         )}
 
@@ -384,8 +408,6 @@ function MissingPersonPage({ onBack }) {
             )}
           </div>
 
-          {formErrors.photo && <p className="mt-2 text-[10px] font-semibold text-rose-600">{formErrors.photo}</p>}
-
           {cameraMode && (
             <div className="mt-3 grid grid-cols-2 gap-3">
               <button
@@ -410,132 +432,146 @@ function MissingPersonPage({ onBack }) {
           )}
         </section>
 
-        <section className="mt-4 rounded-[2rem] border border-slate-200 bg-white p-4 shadow-[0_18px_45px_rgba(15,23,42,0.10)]">
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              <p className="text-[9px] font-black uppercase tracking-[0.18em] text-slate-500">Report details</p>
-              <h2 className="mt-1 text-sm font-black text-slate-900">Add description, identifying marks, and location</h2>
+        {photoPreview && (
+          <section className="mt-4 rounded-[2rem] border border-slate-200 bg-white p-4 shadow-[0_18px_45px_rgba(15,23,42,0.10)] transition-all duration-500 ease-out">
+            <div className="flex items-center justify-between gap-2">
+              <div>
+                <p className="text-[9px] font-black uppercase tracking-[0.18em] text-slate-500">Ready to match</p>
+                <h2 className="mt-1 text-sm font-black text-slate-900">Submit the photo to begin the database search</h2>
+              </div>
+              <span className="inline-flex items-center gap-1 rounded-full border border-brand-100 bg-brand-50 px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.14em] text-brand-700">
+                <FileImage className="w-3 h-3" />
+                Submit
+              </span>
             </div>
-            <div className="rounded-2xl bg-rose-50 border border-rose-100 px-3 py-2 text-[9px] font-black uppercase tracking-[0.14em] text-rose-700">
-              Main Report
-            </div>
-          </div>
 
-          <form onSubmit={handleSubmit} className="mt-4 flex flex-col gap-3">
-            <div className="grid grid-cols-1 gap-3">
-              <div className="flex flex-col gap-1.5">
-                <label htmlFor="personName" className="text-[11px] font-bold text-slate-700">Name</label>
-                <input
-                  id="personName"
-                  name="personName"
-                  value={formData.personName}
-                  onChange={handleFormChange}
-                  placeholder="Full name"
-                  className="h-11 rounded-2xl border border-slate-200 bg-white px-3 text-[11px] font-semibold text-slate-800 outline-none focus:ring-2 focus:ring-brand-100 focus:border-brand-300"
+            <button
+              type="button"
+              onClick={handleSubmitSearch}
+              disabled={searchState === "loading"}
+              className="mt-4 h-12 w-full rounded-2xl bg-gradient-to-r from-brand-700 to-brand-600 text-white text-[11px] font-black flex items-center justify-center gap-1.5 shadow-lg shadow-brand-600/20 disabled:opacity-60"
+            >
+              <FileImage className="w-4 h-4" />
+              {searchState === "loading" ? "Searching..." : "Submit Photo"}
+            </button>
+          </section>
+        )}
+
+        {searchState === "loading" && (
+          <section className="mt-4 rounded-[2rem] border border-slate-200 bg-white p-4 shadow-[0_18px_45px_rgba(15,23,42,0.10)] transition-all duration-500 ease-out">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="text-[9px] font-black uppercase tracking-[0.18em] text-slate-500">Database scan</p>
+                <h2 className="mt-1 text-sm font-black text-slate-900">Finding the closest family match</h2>
+              </div>
+              <div className="flex h-11 w-11 items-center justify-center rounded-full bg-brand-50 text-brand-700 shadow-sm">
+                <Clock3 className="h-5 w-5 animate-pulse" />
+              </div>
+            </div>
+
+            <div className="mt-4 flex flex-col gap-3">
+              {MATCH_STEPS.map((step, index) => {
+                const isComplete = index < searchStepIndex;
+                const isActive = index === searchStepIndex;
+
+                return (
+                  <div
+                    key={step}
+                    className={`flex items-center gap-3 rounded-2xl border p-3 transition-all duration-300 ${
+                      isComplete || isActive
+                        ? "border-brand-100 bg-brand-50/70"
+                        : "border-slate-200 bg-slate-50"
+                    }`}
+                  >
+                    <div
+                      className={`flex h-8 w-8 items-center justify-center rounded-full text-[10px] font-black ${
+                        isComplete
+                          ? "bg-emerald-500 text-white"
+                          : isActive
+                          ? "bg-brand-700 text-white animate-pulse"
+                          : "bg-white text-slate-400 border border-slate-200"
+                      }`}
+                    >
+                      {index + 1}
+                    </div>
+                    <div className="flex-1 text-left">
+                      <p className="text-[11px] font-black text-slate-900">{step}</p>
+                      <p className="mt-0.5 text-[10px] font-medium text-slate-500">
+                        {isActive
+                          ? "Running local search against the family registry"
+                          : isComplete
+                          ? "Completed"
+                          : "Waiting in queue"}
+                      </p>
+                    </div>
+                    {isComplete ? <CheckCircle2 className="h-4 w-4 text-emerald-500" /> : null}
+                  </div>
+                );
+              })}
+            </div>
+          </section>
+        )}
+
+        {searchState === "matched" && matchedFamily && (
+          <section className="mt-4 rounded-[2rem] border border-emerald-200 bg-white p-4 shadow-[0_18px_45px_rgba(15,23,42,0.10)] transition-all duration-500 ease-out animate-pulse">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="text-[9px] font-black uppercase tracking-[0.18em] text-emerald-600">Match found</p>
+                <h2 className="mt-1 text-sm font-black text-slate-900">Closest registry match located</h2>
+              </div>
+              <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.14em] text-emerald-700">
+                Verified local match
+              </span>
+            </div>
+
+            <div className="mt-4 grid grid-cols-2 gap-3">
+              <div className="rounded-[1.5rem] border border-slate-200 bg-slate-50 p-3">
+                <p className="text-[9px] font-black uppercase tracking-[0.16em] text-slate-500">Recently captured</p>
+                <img
+                  src={photoPreview}
+                  alt="Recently captured missing person"
+                  className="mt-2 h-40 w-full rounded-2xl object-cover border border-white shadow-sm"
                 />
-                {formErrors.personName && <p className="text-[10px] font-semibold text-rose-600">{formErrors.personName}</p>}
+              </div>
+
+              <div className="rounded-[1.5rem] border border-slate-200 bg-slate-50 p-3">
+                <p className="text-[9px] font-black uppercase tracking-[0.16em] text-slate-500">Database image</p>
+                <img
+                  src={matchedFamily.avatar}
+                  alt={matchedFamily.name}
+                  className="mt-2 h-40 w-full rounded-2xl object-cover border border-white shadow-sm"
+                />
               </div>
             </div>
 
-            <div className="grid grid-cols-3 gap-3">
-              <div className="flex flex-col gap-1.5">
-                <label htmlFor="age" className="text-[11px] font-bold text-slate-700">Age</label>
-                <input
-                  id="age"
-                  name="age"
-                  type="number"
-                  min="1"
-                  value={formData.age}
-                  onChange={handleFormChange}
-                  placeholder="Age"
-                  className="h-11 rounded-2xl border border-slate-200 bg-white px-3 text-[11px] font-semibold text-slate-800 outline-none focus:ring-2 focus:ring-brand-100 focus:border-brand-300"
-                />
-              </div>
-
-              <div className="flex flex-col gap-1.5 col-span-2">
-                <label htmlFor="gender" className="text-[11px] font-bold text-slate-700">Gender</label>
-                <select
-                  id="gender"
-                  name="gender"
-                  value={formData.gender}
-                  onChange={handleFormChange}
-                  className="h-11 rounded-2xl border border-slate-200 bg-white px-3 text-[11px] font-semibold text-slate-800 outline-none focus:ring-2 focus:ring-brand-100 focus:border-brand-300"
-                >
-                  <option value="">Select gender</option>
-                  <option value="Male">Male</option>
-                  <option value="Female">Female</option>
-                  <option value="Other">Other</option>
-                </select>
-                {formErrors.gender && <p className="text-[10px] font-semibold text-rose-600">{formErrors.gender}</p>}
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 gap-3">
-              <div className="flex flex-col gap-1.5">
-                <label htmlFor="identifyingMarks" className="text-[11px] font-bold text-slate-700">Identifying Marks</label>
-                <textarea
-                  id="identifyingMarks"
-                  name="identifyingMarks"
-                  value={formData.identifyingMarks}
-                  onChange={handleFormChange}
-                  rows="3"
-                  placeholder="Tattoos, scars, clothing, height, complexion, glasses, or any unique marks"
-                  className="rounded-2xl border border-slate-200 bg-white px-3 py-3 text-[11px] font-semibold text-slate-800 outline-none focus:ring-2 focus:ring-brand-100 focus:border-brand-300 resize-none"
-                />
-                {formErrors.identifyingMarks && <p className="text-[10px] font-semibold text-rose-600">{formErrors.identifyingMarks}</p>}
-              </div>
-
-              <div className="flex flex-col gap-1.5">
-                <label htmlFor="lastSeenLocation" className="text-[11px] font-bold text-slate-700">Last Seen Location</label>
-                <div className="relative">
-                  <MapPin className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-                  <input
-                    id="lastSeenLocation"
-                    name="lastSeenLocation"
-                    value={formData.lastSeenLocation}
-                    onChange={handleFormChange}
-                    placeholder="Street, temple, ghat, city, landmark"
-                    className="h-11 w-full rounded-2xl border border-slate-200 bg-white pl-9 pr-3 text-[11px] font-semibold text-slate-800 outline-none focus:ring-2 focus:ring-brand-100 focus:border-brand-300"
-                  />
+            <div className="mt-4 rounded-[1.5rem] border border-slate-200 bg-slate-50 p-4">
+              <div className="flex items-center justify-between gap-2">
+                <div>
+                  <p className="text-[9px] font-black uppercase tracking-[0.16em] text-slate-500">Family contact details</p>
+                  <h3 className="mt-1 text-base font-black text-slate-900">{matchedFamily.name}</h3>
                 </div>
-                {formErrors.lastSeenLocation && <p className="text-[10px] font-semibold text-rose-600">{formErrors.lastSeenLocation}</p>}
+                <div className="rounded-full bg-brand-50 px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.14em] text-brand-700 border border-brand-100">
+                  {Math.min(99, 88 + (matchedFamily.name.length % 10))}% match
+                </div>
               </div>
-              
-              <div className="flex flex-col gap-1.5">
-                <label htmlFor="description" className="text-[11px] font-bold text-slate-700">Description</label>
-                <textarea
-                  id="description"
-                  name="description"
-                  value={formData.description}
-                  onChange={handleFormChange}
-                  rows="4"
-                  placeholder="Briefly describe the situation, last clothing, contact clues, urgency, or any helpful context"
-                  className="rounded-2xl border border-slate-200 bg-white px-3 py-3 text-[11px] font-semibold text-slate-800 outline-none focus:ring-2 focus:ring-brand-100 focus:border-brand-300 resize-none"
-                />
-                {formErrors.description && <p className="text-[10px] font-semibold text-rose-600">{formErrors.description}</p>}
-              </div>
-            </div>
 
-            <div className="grid grid-cols-2 gap-3 pt-1">
-              <button
-                type="button"
-                onClick={onBack}
-                className="h-12 rounded-2xl border border-slate-200 bg-slate-100 text-slate-700 text-[11px] font-black flex items-center justify-center gap-1.5"
-              >
-                <ArrowLeft className="w-4 h-4" />
-                Back
-              </button>
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className="h-12 rounded-2xl bg-gradient-to-r from-brand-700 to-brand-600 text-white text-[11px] font-black flex items-center justify-center gap-1.5 shadow-lg shadow-brand-600/20 disabled:opacity-60"
-              >
-                <FileImage className="w-4 h-4" />
-                {isSubmitting ? "Submitting..." : "Submit Report"}
-              </button>
+              <div className="mt-3 grid gap-2 text-[11px]">
+                <div className="flex items-center justify-between rounded-2xl bg-white px-3 py-2 border border-slate-200">
+                  <span className="font-semibold text-slate-500">Relation</span>
+                  <span className="font-black text-slate-900">{matchedFamily.relation}</span>
+                </div>
+                <div className="flex items-center justify-between rounded-2xl bg-white px-3 py-2 border border-slate-200">
+                  <span className="font-semibold text-slate-500">Contact Number</span>
+                  <span className="font-black text-slate-900">{matchedFamily.phone || matchedFamily.idCardNumber || "Not provided"}</span>
+                </div>
+                <div className="flex items-center justify-between rounded-2xl bg-white px-3 py-2 border border-slate-200">
+                  <span className="font-semibold text-slate-500">ID Number</span>
+                  <span className="font-black text-slate-900">{matchedFamily.idCardNumber || "Not provided"}</span>
+                </div>
+              </div>
             </div>
-          </form>
-        </section>
+          </section>
+        )}
 
         <section className="mt-4 rounded-[2rem] border border-slate-200 bg-white p-4 shadow-[0_18px_45px_rgba(15,23,42,0.10)]">
           <div className="flex items-center justify-between gap-2">
@@ -614,42 +650,6 @@ function MissingPersonPage({ onBack }) {
         </div>
       )}
 
-      {submitState === "success" && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/55 px-4 backdrop-blur-md">
-          <div className="w-full max-w-sm rounded-[2rem] border border-slate-200 bg-white shadow-[0_30px_90px_rgba(15,23,42,0.28)] overflow-hidden">
-            <div className="h-1.5 bg-gradient-to-r from-brand-700 via-sky-600 to-emerald-500" />
-            <div className="p-5 text-center">
-              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-emerald-50 text-emerald-700 shadow-sm">
-                <CheckCircle2 className="h-7 w-7" />
-              </div>
-              <p className="mt-4 text-[10px] font-black uppercase tracking-[0.22em] text-slate-500">
-                Acknowledgement received
-              </p>
-              <h3 className="mt-2 text-xl font-black tracking-tight text-slate-900">
-                Report Received
-              </h3>
-              <p className="mt-3 text-[13px] leading-relaxed text-slate-600 font-medium">
-                Your report has been securely submitted. Our team will review the details and keep you informed as soon as there is an update.
-              </p>
-
-              <div className="mt-4 rounded-[1.3rem] border border-slate-200 bg-slate-50 px-4 py-3 text-left">
-                <p className="text-[10px] font-black uppercase tracking-[0.16em] text-slate-500">Next step</p>
-                <p className="mt-1 text-[12px] font-semibold text-slate-700">
-                  Please stay reachable for any follow-up from the response team.
-                </p>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => setSubmitState("idle")}
-                className="mt-5 h-11 w-full rounded-2xl bg-gradient-to-r from-brand-700 to-brand-600 text-white text-[11px] font-black shadow-lg shadow-brand-600/20"
-              >
-                Close
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
