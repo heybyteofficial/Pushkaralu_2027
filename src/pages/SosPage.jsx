@@ -9,30 +9,31 @@ function SosPage({ onBack }) {
 
   const timerRef = useRef(null);
 
-  const handleButtonClick = () => {
+  const startHold = (e) => {
+    if (e && e.preventDefault) e.preventDefault();
     if (isDistressActive) return;
+    clearInterval(timerRef.current);
+    setIsHolding(true);
+    setHoldProgress(0);
 
-    if (isHolding) {
-      setIsHolding(false);
-      setHoldProgress(0);
-      clearInterval(timerRef.current);
-    } else {
-      setIsHolding(true);
-      setHoldProgress(0);
-      clearInterval(timerRef.current);
+    timerRef.current = setInterval(() => {
+      setHoldProgress((prev) => {
+        if (prev >= 100) {
+          clearInterval(timerRef.current);
+          setIsDistressActive(true);
+          setIsHolding(false);
+          return 100;
+        }
+        return prev + 1;
+      });
+    }, 30);
+  };
 
-      timerRef.current = setInterval(() => {
-        setHoldProgress((prev) => {
-          if (prev >= 100) {
-            clearInterval(timerRef.current);
-            setIsDistressActive(true);
-            setIsHolding(false);
-            return 100;
-          }
-          return prev + 1;
-        });
-      }, 30);
-    }
+  const cancelHold = () => {
+    if (isDistressActive) return;
+    setIsHolding(false);
+    setHoldProgress(0);
+    clearInterval(timerRef.current);
   };
 
   useEffect(() => {
@@ -126,7 +127,17 @@ function SosPage({ onBack }) {
               </svg>
 
               <button
-                onClick={handleButtonClick}
+                onPointerDown={startHold}
+                onPointerUp={cancelHold}
+                onPointerLeave={cancelHold}
+                onPointerCancel={cancelHold}
+                onContextMenu={(e) => e.preventDefault()}
+                onKeyDown={(e) => {
+                  if (e.key === " " || e.key === "Enter") startHold(e);
+                }}
+                onKeyUp={(e) => {
+                  if (e.key === " " || e.key === "Enter") cancelHold();
+                }}
                 className={`w-32 h-32 rounded-full flex flex-col items-center justify-center gap-1.5 text-white shadow-xl transition-all duration-300 border-4 border-white select-none ${
                   isDistressActive
                     ? "bg-gradient-to-b from-emerald-400 to-emerald-600 shadow-emerald-500/30 scale-105 active:scale-100"
@@ -134,7 +145,7 @@ function SosPage({ onBack }) {
                     ? "bg-gradient-to-b from-rose-500 to-rose-700 shadow-rose-500/40 scale-95"
                     : "bg-gradient-to-b from-rose-400 to-rose-600 shadow-rose-500/30 hover:scale-105 active:scale-95"
                 }`}
-                aria-label={isDistressActive ? "Distress Beacon Active" : "Click for distress beacon"}
+                aria-label={isDistressActive ? "Distress Beacon Active" : "Hold for distress beacon"}
               >
                 {isDistressActive ? (
                   <>
