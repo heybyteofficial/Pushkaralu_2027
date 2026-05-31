@@ -4,6 +4,7 @@ import SosPage from "./pages/SosPage";
 import MissingPersonPage from "./pages/MissingPersonPage";
 import ProfilePage from "./pages/ProfilePage";
 import FamilyMembers from "./components/FamilyMembers";
+import AIGhatPage from "./pages/AIGhatPage";
 
 function App() {
   const [currentScreen, setCurrentScreen] = useState("home");
@@ -14,6 +15,15 @@ function App() {
 
   if (currentScreen === "missing-child") {
     return <MissingPersonPage onBack={() => setCurrentScreen("home")} />;
+  }
+
+  if (currentScreen === "ai-ghat") {
+    return (
+      <AIGhatPage
+        onBack={() => setCurrentScreen("home")}
+        onNavigate={setCurrentScreen}
+      />
+    );
   }
 
   if (currentScreen === "profile") {
