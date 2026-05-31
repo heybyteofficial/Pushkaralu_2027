@@ -4,9 +4,11 @@ import {
   AlertTriangle,
   Camera,
   CameraOff,
+  CheckCircle2,
   Clock3,
   Eye,
   FileImage,
+  MapPin,
   UploadCloud,
   WandSparkles,
   X,
@@ -14,10 +16,27 @@ import {
 import Navbar from "../layouts/Navbar";
 import apLogo from "@/assets/ap-govt-logo.png";
 import { users as initialFamilyUsers } from "../data/family";
-import { sanitizePhone } from "../utils/phone";
 
 const STORAGE_KEY = "pushkaralu_missing_reports";
 const FAMILY_STORAGE_KEY = "pushkaralu_family_members";
+const MATCH_STEPS = [
+  "Searching the database",
+  "Finding the nearest matches",
+  "Getting the closest match",
+  "Match found",
+];
+
+const DEFAULT_FORM = {
+  personName: "",
+  age: "",
+  gender: "",
+  relation: "",
+  identifyingMarks: "",
+  lastSeenLocation: "",
+  lastSeenTime: "",
+  description: "",
+};
+
 const RADIAL_TICKS = Array.from({ length: 100 }, (_, index) => index);
 
 function ScanCard({ progress, stepIndex, phase }) {
@@ -45,13 +64,16 @@ function ScanCard({ progress, stepIndex, phase }) {
   ];
   const centralValue = Math.round(progress);
 
+  const nodeProgressClass =
+    progress < 25 ? "opacity-35" : progress < 50 ? "opacity-60" : progress < 75 ? "opacity-80" : "opacity-100";
+
   return (
     <motion.section
       layout
       initial={{ opacity: 0, y: 12, filter: "blur(6px)" }}
       animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
       transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
-      className="relative w-full min-w-0 overflow-hidden rounded-[2rem] border border-slate-200/80 bg-white/85 p-4 shadow-[0_18px_45px_rgba(15,23,42,0.10)] backdrop-blur-xl"
+      className="mt-4 relative w-full min-w-0 overflow-hidden rounded-[2rem] border border-slate-200/80 bg-white/85 p-4 shadow-[0_18px_45px_rgba(15,23,42,0.10)] backdrop-blur-xl"
     >
       <motion.div
         aria-hidden="true"
@@ -344,7 +366,7 @@ function MissingPersonPage({ onBack }) {
       window.setTimeout(() => {
         try {
           scanCardRef.current?.focus({ preventScroll: true });
-        } catch {
+        } catch (e) {
           // fallback for older browsers
           if (scanCardRef.current) scanCardRef.current.focus();
         }
@@ -357,7 +379,7 @@ function MissingPersonPage({ onBack }) {
       window.setTimeout(() => {
         try {
           matchedCardRef.current?.focus({ preventScroll: true });
-        } catch {
+        } catch (e) {
           if (matchedCardRef.current) matchedCardRef.current.focus();
         }
       }, 220);
@@ -394,6 +416,7 @@ function MissingPersonPage({ onBack }) {
         video: { facingMode: { ideal: facingMode } },
         audio: false,
       });
+
       streamRef.current = stream;
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
@@ -619,15 +642,12 @@ const heroStats = [
   { label: "LIVE RESPONSE", value: "On" },
 ];
 
-const DEFAULT_PHONE = "9959401213";
-const displayedMatchedPhone = matchedFamily?.phone ?? DEFAULT_PHONE;
-const sanitizedMatchedPhone = sanitizePhone(displayedMatchedPhone);
-
 return (
-  <div className="max-w-sm mx-auto min-h-screen bg-slate-50 flex flex-col relative pb-4">
+  <div className="max-w-sm mx-auto min-h-screen bg-slate-50 flex flex-col relative shadow-2xl border-x border-slate-200 select-none pb-4">
     <Navbar showBack={true} onBack={onBack} />
 
-    <div className="flex-1 overflow-y-auto px-4 pt-4">
+    <div className="flex-1 overflow-y-auto px-4 pt-4 pb-6">
+      {/* Main Header Card */}
       <section className="relative overflow-hidden rounded-[2rem] border border-slate-200 bg-white p-3 shadow-sm">
         <div className="flex items-center gap-2 mb-2">
           <div className="inline-flex items-center gap-1 rounded-full border border-rose-200 bg-rose-50 px-2 py-1 text-[8px] font-black uppercase tracking-widest text-rose-700">
@@ -641,7 +661,7 @@ return (
         <h1 className="text-[20px] font-extrabold leading-tight text-slate-900 mb-2">
           One scan-<span className="text-brand-700">Instant family access</span>
         </h1>
-
+        {/* Integrated Stats Row */}
         <div className="grid grid-cols-3 gap-2">
           {heroStats.map((stat) => (
             <div key={stat.label} className="rounded-xl border border-slate-100 bg-slate-50 p-2.5 text-center">
@@ -651,220 +671,253 @@ return (
           ))}
         </div>
       </section>
-
+    
       {cameraError && (
         <div className="mt-4 rounded-2xl border border-rose-200 bg-rose-50 px-3 py-2 text-[11px] font-semibold text-rose-700">
           {cameraError}
         </div>
       )}
+      
+        {(searchState !== "loading" && scanPhase !== "finishing" && searchState !== "matched") && (
+          <section className="mt-4 rounded-[2rem] border border-slate-200 bg-white backdrop-blur-xl p-4 shadow-[0_18px_45px_rgba(15,23,42,0.10)]">
+          <div className="flex items-center justify-between gap-2">
+            <div>
+              <p className="text-[9px] font-black uppercase tracking-[0.18em] text-slate-500">Photo section</p>
+              <h2 className="text-sm font-black text-slate-900 mt-1">Upload or capture the missing person’s photo</h2>
+            </div>
+            <span className="inline-flex items-center gap-1 rounded-full bg-brand-50 px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.16em] text-brand-700 border border-brand-100">
+              <Eye className="w-3 h-3" />
+              Visible
+            </span>
+          </div>
 
-      <div className="mt-4 flex flex-col gap-4">
-        <div className="rounded-[2rem] border border-slate-200 bg-white p-4 shadow-sm flex-shrink-0 min-h-[520px]">
-          <AnimatePresence mode="wait" initial={false}>
-            {searchState === "idle" && (
-              <motion.div
-                key="idle"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.3 }}
-                className="w-full min-h-[472px] p-4"
+          <div className="mt-4 grid grid-cols-3 gap-3">
+            <button
+              type="button"
+              onClick={handleCameraOpen}
+              className="rounded-[1.4rem] border border-brand-100 bg-brand-50 px-3 py-4 flex flex-col items-center justify-center gap-2 shadow-sm active:scale-[0.98] transition-all duration-300"
+            >
+              <div className="w-10 h-10 rounded-2xl bg-brand-700 text-white flex items-center justify-center shadow-lg shadow-brand-600/20">
+                <Camera className="w-5 h-5" />
+              </div>
+              <span className="text-[11px] font-black text-brand-900">Open Camera</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={handleSelfieCam}
+              className="rounded-[1.4rem] border border-emerald-100 bg-emerald-50 px-3 py-4 flex flex-col items-center justify-center gap-2 shadow-sm active:scale-[0.98] transition-all duration-300"
+            >
+              <div className="w-10 h-10 rounded-2xl bg-emerald-600 text-white flex items-center justify-center shadow-lg shadow-emerald-600/20">
+                <Camera className="w-5 h-5" />
+              </div>
+              <span className="text-[11px] font-black text-emerald-900">Selfie Cam</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={handleUploadClick}
+              className="rounded-[1.4rem] border border-slate-200 bg-slate-50 px-3 py-4 flex flex-col items-center justify-center gap-2 shadow-sm active:scale-[0.98] transition-all duration-300"
+            >
+              <div className="w-10 h-10 rounded-2xl bg-slate-900 text-white flex items-center justify-center shadow-lg shadow-slate-500/20">
+                <UploadCloud className="w-5 h-5" />
+              </div>
+              <span className="text-[11px] font-black text-slate-800">Upload Photo</span>
+            </button>
+          </div>
+          <p className="mt-3 text-[10px] font-semibold text-slate-500">{captureHint}</p>
+
+          <input
+            type="file"
+            accept="image/*"
+            className="hidden"
+            ref={fileInputRef}
+            onChange={handlePhotoChange}
+          />
+
+          <canvas ref={canvasRef} className="hidden" />
+
+          <div className="mt-4 rounded-[1.6rem] border border-dashed border-slate-300 bg-slate-50 p-3">
+            {cameraMode ? (
+              <div className="overflow-hidden rounded-[1.4rem] border border-slate-200 bg-slate-950 shadow-inner">
+                <video ref={videoRef} playsInline muted className="h-60 w-full object-cover" />
+              </div>
+            ) : photoPreview ? (
+              <div className="relative overflow-hidden rounded-[1.4rem] border border-slate-200 bg-white">
+                <img src={photoPreview} alt="Missing person preview" className="h-60 w-full object-cover" />
+                <button
+                  type="button"
+                  onClick={handleClearPhoto}
+                  className="absolute top-3 right-3 h-9 w-9 rounded-full bg-black/70 text-white flex items-center justify-center backdrop-blur-md"
+                  aria-label="Remove photo"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            ) : (
+              <div className="h-60 rounded-[1.4rem] bg-gradient-to-br from-slate-100 to-slate-50 flex flex-col items-center justify-center text-center px-6">
+                <div className="w-14 h-14 rounded-full bg-white shadow-md flex items-center justify-center text-slate-400">
+                  <CameraOff className="w-6 h-6" />
+                </div>
+                <p className="mt-3 text-sm font-black text-slate-800">No photo selected</p>
+                <p className="mt-1 text-[11px] font-medium text-slate-500">
+                  Add a clear image first so the report feels immediate and recognizable.
+                </p>
+              </div>
+            )}
+          </div>
+
+          {cameraMode && (
+            <div className="mt-3 grid grid-cols-2 gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  stopCamera();
+                  setCameraMode(false);
+                }}
+                className="h-11 rounded-2xl border border-slate-200 bg-slate-100 text-slate-700 text-[11px] font-black"
               >
-                <section className="rounded-[1.6rem] border border-slate-200 bg-white backdrop-blur-xl p-4 shadow-[0_18px_45px_rgba(15,23,42,0.10)]">
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleCapture}
+                className="h-11 rounded-2xl bg-sky-600 text-white text-[11px] font-black flex items-center justify-center gap-1.5 shadow-lg shadow-sky-500/20"
+              >
+                <Camera className="w-4 h-4" />
+                Capture Photo
+              </button>
+            </div>
+          )}
+          </section>
+        )}
+
+          {photoPreview && (searchState !== "loading" && scanPhase !== "finishing" && searchState !== "matched") && (
+          <section className="mt-4 rounded-[2rem] border border-slate-200 bg-white p-4 shadow-[0_18px_45px_rgba(15,23,42,0.10)] transition-all duration-500 ease-out">
+            <div className="flex items-center justify-between gap-2">
+              <div>
+                <p className="text-[9px] font-black uppercase tracking-[0.18em] text-slate-500">Ready to match</p>
+                <h2 className="mt-1 text-sm font-black text-slate-900">Submit the photo to begin the database search</h2>
+              </div>
+              <span className="inline-flex items-center gap-1 rounded-full border border-brand-100 bg-brand-50 px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.14em] text-brand-700">
+                <FileImage className="w-3 h-3" />
+                Submit
+              </span>
+            </div>
+
+            <button
+              type="button"
+              onClick={handleSubmitSearch}
+              disabled={searchState === "loading"}
+              className="mt-4 h-12 w-full rounded-2xl bg-gradient-to-r from-brand-700 to-brand-600 text-white text-[11px] font-black flex items-center justify-center gap-1.5 shadow-lg shadow-brand-600/20 disabled:opacity-60"
+            >
+              <FileImage className="w-4 h-4" />
+              {searchState === "loading" ? "Searching..." : "Submit Photo"}
+            </button>
+          </section>
+          )}
+
+        <AnimatePresence mode="sync" initial={false}>
+          {(searchState === "loading" || (scanPhase === "finishing" && searchState !== "matched")) && (
+            <motion.div
+              key="scan"
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
+            >
+              <div
+                ref={scanCardRef}
+                tabIndex={-1}
+                role="status"
+                aria-live="polite"
+                aria-atomic="true"
+                aria-busy={searchState === "loading" || scanPhase === "finishing"}
+              >
+                <span className="sr-only" aria-live="polite">Scanning {searchProgress}%</span>
+                {searchProgress === 100 && <span className="sr-only" aria-live="polite">Scan complete — preparing match</span>}
+                <ScanCard progress={searchProgress} stepIndex={searchStepIndex} phase={scanPhase} />
+              </div>
+            </motion.div>
+          )}
+
+          {searchState === "matched" && matchedFamily && (
+            <motion.div
+              key="matched"
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
+            >
+              <section
+                ref={matchedCardRef}
+                tabIndex={-1}
+                role="region"
+                aria-live="polite"
+                className="mt-4 rounded-[2rem] border border-emerald-200 bg-white p-4 shadow-[0_18px_45px_rgba(15,23,42,0.10)]"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="text-[9px] font-black uppercase tracking-[0.18em] text-emerald-600">Match found</p>
+                    <h2 className="mt-1 text-sm font-black text-slate-900">Closest registry match located</h2>
+                  </div>
+                  <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.14em] text-emerald-700">
+                    Verified local match
+                  </span>
+                </div>
+
+                <div className="mt-4 grid grid-cols-2 gap-3">
+                  <div className="rounded-[1.5rem] border border-slate-200 bg-slate-50 p-3">
+                    <p className="text-[9px] font-black uppercase tracking-[0.16em] text-slate-500">Recently captured</p>
+                    <img
+                      src={photoPreview}
+                      alt="Recently captured missing person"
+                      className="mt-2 h-40 w-full rounded-2xl object-cover border border-white shadow-sm"
+                    />
+                  </div>
+
+                  <div className="rounded-[1.5rem] border border-slate-200 bg-slate-50 p-3">
+                    <p className="text-[9px] font-black uppercase tracking-[0.16em] text-slate-500">Database image</p>
+                    <img
+                      src={matchedFamily.avatar}
+                      alt={matchedFamily.name}
+                      className="mt-2 h-40 w-full rounded-2xl object-cover border border-white shadow-sm"
+                    />
+                  </div>
+                </div>
+
+                <div className="mt-4 rounded-[1.5rem] border border-slate-200 bg-slate-50 p-4">
                   <div className="flex items-center justify-between gap-2">
                     <div>
-                      <p className="text-[9px] font-black uppercase tracking-[0.18em] text-slate-500">Photo section</p>
-                      <h2 className="mt-1 text-sm font-black text-slate-900">Upload or capture the missing person’s photo</h2>
+                      <p className="text-[9px] font-black uppercase tracking-[0.16em] text-slate-500">Family contact details</p>
+                      <h3 className="mt-1 text-base font-black text-slate-900">{matchedFamily.name}</h3>
                     </div>
-                    <span className="inline-flex items-center gap-1 rounded-full bg-brand-50 px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.16em] text-brand-700 border border-brand-100">
-                      <Eye className="w-3 h-3" />
-                      Visible
-                    </span>
-                  </div>
-
-                  <div className="mt-4 grid grid-cols-3 gap-2">
-                    <button type="button" onClick={handleCameraOpen} className="rounded-[1.4rem] border border-brand-100 bg-brand-50 px-3 py-4 flex flex-col items-center justify-center gap-2 shadow-sm active:scale-[0.98] transition-all duration-300">
-                      <div className="w-10 h-10 rounded-2xl bg-brand-700 text-white flex items-center justify-center shadow-lg shadow-brand-600/20">
-                        <Camera className="w-5 h-5" />
-                      </div>
-                      <span className="text-[11px] font-black text-brand-900">Open Camera</span>
-                    </button>
-
-                    <button type="button" onClick={handleSelfieCam} className="rounded-[1.4rem] border border-emerald-100 bg-emerald-50 px-3 py-4 flex flex-col items-center justify-center gap-2 shadow-sm active:scale-[0.98] transition-all duration-300">
-                      <div className="w-10 h-10 rounded-2xl bg-emerald-600 text-white flex items-center justify-center shadow-lg shadow-emerald-600/20">
-                        <Camera className="w-5 h-5" />
-                      </div>
-                      <span className="text-[11px] font-black text-emerald-900">Selfie Cam</span>
-                    </button>
-
-                    <button type="button" onClick={handleUploadClick} className="rounded-[1.4rem] border border-slate-200 bg-slate-50 px-3 py-4 flex flex-col items-center justify-center gap-2 shadow-sm active:scale-[0.98] transition-all duration-300">
-                      <div className="w-10 h-10 rounded-2xl bg-slate-900 text-white flex items-center justify-center shadow-lg shadow-slate-500/20">
-                        <UploadCloud className="w-5 h-5" />
-                      </div>
-                      <span className="text-[11px] font-black text-slate-800">Upload Photo</span>
-                    </button>
-                  </div>
-
-                  <p className="mt-3 text-[10px] font-semibold text-slate-500">{captureHint}</p>
-
-                  <input type="file" accept="image/*" className="hidden" ref={fileInputRef} onChange={handlePhotoChange} />
-                  <canvas ref={canvasRef} className="hidden" />
-
-                  <div className="mt-4 rounded-[1.6rem] border border-dashed border-slate-300 bg-slate-50 p-3">
-                    {cameraMode ? (
-                      <div className="overflow-hidden rounded-[1.4rem] border border-slate-200 bg-slate-950 shadow-inner">
-                        <video ref={videoRef} playsInline muted className="h-60 w-full object-cover" />
-                      </div>
-                    ) : photoPreview ? (
-                      <div className="relative overflow-hidden rounded-[1.4rem] border border-slate-200 bg-white">
-                        <img src={photoPreview} alt="Missing person preview" className="h-60 w-full object-cover" />
-                        <button type="button" onClick={handleClearPhoto} className="absolute top-3 right-3 h-9 w-9 rounded-full bg-black/70 text-white flex items-center justify-center backdrop-blur-md" aria-label="Remove photo">
-                          <X className="w-4 h-4" />
-                        </button>
-                      </div>
-                    ) : (
-                      <div className="h-60 rounded-[1.4rem] bg-gradient-to-br from-slate-100 to-slate-50 flex flex-col items-center justify-center text-center px-6">
-                        <div className="w-14 h-14 rounded-full bg-white shadow-md flex items-center justify-center text-slate-400">
-                          <CameraOff className="w-6 h-6" />
-                        </div>
-                        <p className="mt-3 text-sm font-black text-slate-800">No photo selected</p>
-                        <p className="mt-1 text-[11px] font-medium text-slate-500">Add a clear image first so the report feels immediate and recognizable.</p>
-                      </div>
-                    )}
-                  </div>
-
-                  {photoPreview && (
-                    <section className="mt-4 rounded-[2rem] border border-slate-200 bg-white p-4 shadow-[0_18px_45px_rgba(15,23,42,0.10)] transition-all duration-500 ease-out">
-                      <div className="flex items-center justify-between gap-2">
-                        <div>
-                          <p className="text-[9px] font-black uppercase tracking-[0.18em] text-slate-500">Ready to match</p>
-                          <h2 className="mt-1 text-sm font-black text-slate-900">Submit the photo to begin the database search</h2>
-                        </div>
-                        <span className="inline-flex items-center gap-1 rounded-full border border-brand-100 bg-brand-50 px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.14em] text-brand-700">
-                          <FileImage className="w-3 h-3" />
-                          Submit
-                        </span>
-                      </div>
-
-                      <button
-                        type="button"
-                        onClick={handleSubmitSearch}
-                        disabled={searchState === "loading"}
-                        className="mt-4 h-12 w-full rounded-2xl bg-gradient-to-r from-brand-700 to-brand-600 text-white text-[11px] font-black flex items-center justify-center gap-1.5 shadow-lg shadow-brand-600/20 disabled:opacity-60"
-                      >
-                        <FileImage className="w-4 h-4" />
-                        Submit Photo
-                      </button>
-                    </section>
-                  )}
-
-                  {cameraMode && (
-                    <div className="mt-3 grid grid-cols-2 gap-3">
-                      <button type="button" onClick={() => { stopCamera(); setCameraMode(false); }} className="h-11 rounded-2xl border border-slate-200 bg-slate-100 text-slate-700 text-[11px] font-black">Cancel</button>
-                      <button type="button" onClick={handleCapture} className="h-11 rounded-2xl bg-sky-600 text-white text-[11px] font-black flex items-center justify-center gap-1.5 shadow-lg shadow-sky-500/20">
-                        <Camera className="w-4 h-4" />
-                        Capture Photo
-                      </button>
+                    <div className="rounded-full bg-brand-50 px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.14em] text-brand-700 border border-brand-100">
+                      {Math.min(99, 88 + (matchedFamily.name.length % 10))}% match
                     </div>
-                  )}
-                </section>
-              </motion.div>
-            )}
+                  </div>
 
-            {searchState === "loading" && (
-              <motion.div
-                key="loading"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.3 }}
-                className="w-full min-h-[472px] p-4"
-              >
-                <div ref={scanCardRef} tabIndex={-1} role="status" aria-live="polite" aria-atomic="true" aria-busy={true} className="h-full">
-                  <ScanCard progress={searchProgress} stepIndex={searchStepIndex} phase={scanPhase} />
+                  <div className="mt-3 grid gap-2 text-[11px]">
+                    <div className="flex items-center justify-between rounded-2xl bg-white px-3 py-2 border border-slate-200">
+                      <span className="font-semibold text-slate-500">Relation</span>
+                      <span className="font-black text-slate-900">{matchedFamily.relation}</span>
+                    </div>
+                    <div className="flex items-center justify-between rounded-2xl bg-white px-3 py-2 border border-slate-200">
+                      <span className="font-semibold text-slate-500">Contact Number</span>
+                      <span className="font-black text-slate-900">{matchedFamily.phone || "Not provided"}</span>
+                    </div>
+                    <div className="flex items-center justify-between rounded-2xl bg-white px-3 py-2 border border-slate-200">
+                      <span className="font-semibold text-slate-500">ID Number</span>
+                      <span className="font-black text-slate-900">{matchedFamily.idCardNumber || "Not provided"}</span>
+                    </div>
+                  </div>
                 </div>
-              </motion.div>
-            )}
+              </section>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
-            {searchState === "matched" && matchedFamily && (
-              <motion.div
-                key="matched"
-                initial={{ opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -8 }}
-                transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
-                className="w-full min-h-[472px] p-4"
-              >
-                <section
-                  ref={matchedCardRef}
-                  tabIndex={-1}
-                  role="region"
-                  aria-live="polite"
-                  className="rounded-[2rem] border border-emerald-200 bg-white p-4 shadow-[0_18px_45px_rgba(15,23,42,0.10)]"
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <p className="text-[9px] font-black uppercase tracking-[0.18em] text-emerald-600">Match found</p>
-                      <h2 className="mt-1 text-sm font-black text-slate-900">Closest registry match located</h2>
-                    </div>
-                    <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.14em] text-emerald-700">Verified local match</span>
-                  </div>
-
-                  <div className="mt-4 grid grid-cols-2 gap-3">
-                    <div className="rounded-[1.5rem] border border-slate-200 bg-slate-50 p-3">
-                      <p className="text-[9px] font-black uppercase tracking-[0.16em] text-slate-500">Recently captured</p>
-                      <img src={photoPreview} alt="Recently captured missing person" className="mt-2 h-40 w-full rounded-2xl object-cover border border-white shadow-sm" />
-                    </div>
-
-                    <div className="rounded-[1.5rem] border border-slate-200 bg-slate-50 p-3">
-                      <p className="text-[9px] font-black uppercase tracking-[0.16em] text-slate-500">Database image</p>
-                      <img src={matchedFamily.avatar} alt={matchedFamily.name} className="mt-2 h-40 w-full rounded-2xl object-cover border border-white shadow-sm" />
-                    </div>
-                  </div>
-
-                  <div className="mt-4 rounded-[1.5rem] border border-slate-200 bg-slate-50 p-4">
-                    <div className="flex items-center justify-between gap-2">
-                      <div>
-                        <p className="text-[9px] font-black uppercase tracking-[0.16em] text-slate-500">Family contact details</p>
-                        <h3 className="mt-1 text-base font-black text-slate-900">{matchedFamily.name}</h3>
-                      </div>
-                      <div className="rounded-full bg-brand-50 px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.14em] text-brand-700 border border-brand-100">
-                        {Math.min(99, 88 + (matchedFamily.name.length % 10))}% match
-                      </div>
-                    </div>
-
-                    <div className="mt-3 grid gap-2 text-[11px]">
-                      <div className="flex items-center justify-between rounded-2xl bg-white px-3 py-2 border border-slate-200">
-                        <span className="font-semibold text-slate-500">Relation</span>
-                        <span className="font-black text-slate-900">{matchedFamily.relation}</span>
-                      </div>
-                      <div className="flex items-center justify-between rounded-2xl bg-white px-3 py-2 border border-slate-200">
-                        <span className="font-semibold text-slate-500">Contact Number</span>
-                        {sanitizedMatchedPhone ? (
-                          <a
-                            href={`tel:${sanitizedMatchedPhone}`}
-                            className="font-black text-slate-900"
-                            aria-label={`Call ${matchedFamily.name} at ${displayedMatchedPhone}`}
-                          >
-                            {displayedMatchedPhone}
-                          </a>
-                        ) : (
-                          <span className="font-black text-slate-900">{displayedMatchedPhone}</span>
-                        )}
-                      </div>
-                      <div className="flex items-center justify-between rounded-2xl bg-white px-3 py-2 border border-slate-200">
-                        <span className="font-semibold text-slate-500">ID Number</span>
-                        <span className="font-black text-slate-900">{matchedFamily.idCardNumber || "Not provided"}</span>
-                      </div>
-                    </div>
-                  </div>
-                </section>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
-
-      <section className="rounded-[2rem] border border-slate-200 bg-white p-4 shadow-[0_18px_45px_rgba(15,23,42,0.10)] transition-all duration-700 ease-out">
+        <section className="mt-4 rounded-[2rem] border border-slate-200 bg-white p-4 shadow-[0_18px_45px_rgba(15,23,42,0.10)] transition-all duration-700 ease-out">
           <div className="flex items-center justify-between gap-2">
             <div>
               <p className="text-[9px] font-black uppercase tracking-[0.18em] text-slate-500">Recent reports</p>
@@ -942,7 +995,6 @@ return (
       )}
 
     </div>
-  </div>
   );
 }
 
