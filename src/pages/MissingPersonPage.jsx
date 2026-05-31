@@ -19,6 +19,7 @@ import { users as initialFamilyUsers } from "../data/family";
 
 const STORAGE_KEY = "pushkaralu_missing_reports";
 const FAMILY_STORAGE_KEY = "pushkaralu_family_members";
+const DEFAULT_CONTACT_NUMBER = "9959401213";
 const MATCH_STEPS = [
   "Searching the database",
   "Finding the nearest matches",
@@ -531,7 +532,7 @@ function MissingPersonPage({ onBack }) {
         if (Array.isArray(parsed) && parsed.length > 0) {
           return parsed.map((member) => ({
             ...member,
-              phone: member.phone || "Not provided",
+              phone: member.phone || DEFAULT_CONTACT_NUMBER,
           }));
         }
       }
@@ -541,7 +542,7 @@ function MissingPersonPage({ onBack }) {
 
     return initialFamilyUsers.map((member) => ({
       ...member,
-      phone: member.phone || "Not provided",
+      phone: member.phone || DEFAULT_CONTACT_NUMBER,
     }));
   };
 
@@ -904,7 +905,12 @@ return (
                     </div>
                     <div className="flex items-center justify-between rounded-2xl bg-white px-3 py-2 border border-slate-200">
                       <span className="font-semibold text-slate-500">Contact Number</span>
-                      <span className="font-black text-slate-900">{matchedFamily.phone || "Not provided"}</span>
+                      <a
+                        href={`tel:${matchedFamily.phone || DEFAULT_CONTACT_NUMBER}`}
+                        className="font-black text-slate-900"
+                      >
+                        {matchedFamily.phone || DEFAULT_CONTACT_NUMBER}
+                      </a>
                     </div>
                     <div className="flex items-center justify-between rounded-2xl bg-white px-3 py-2 border border-slate-200">
                       <span className="font-semibold text-slate-500">ID Number</span>
