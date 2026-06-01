@@ -148,7 +148,7 @@ function AIGhatPage({ onBack, onNavigate }) {
             AI Powered
           </div>
           <h1 className="mt-3 text-2xl font-black leading-tight">Choose Your Ghat</h1>
-          <p className="mt-2 max-w-[22ch] text-sm text-white/85">
+          <p className="mt-2 max-w-[50ch] text-sm text-white/85">
             Live crowd data updated every 2 mins
           </p>
         </div>
