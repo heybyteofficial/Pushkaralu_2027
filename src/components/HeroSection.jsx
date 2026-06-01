@@ -9,7 +9,6 @@ function HeroSection() {
         className="absolute inset-0 w-full h-full object-cover"
         alt="A Image showing godavari river"
       />
-
       <div className="absolute inset-0 bg-gradient-to-r from-black/60 to-transparent" />
 
       <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-md rounded-2xl p-3 shadow-md flex flex-col gap-2 border border-white/40 min-w-[128px]">

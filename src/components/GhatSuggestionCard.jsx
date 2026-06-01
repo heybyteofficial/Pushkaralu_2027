@@ -18,7 +18,7 @@ const CROWD_THEME = {
     glow: "shadow-[0_0_0_8px_rgba(245,158,11,0.12)]",
   },
   rose: {
-    stroke: "#f43f5e",
+    stroke: "#55000e",
     accent: "text-rose-600",
     label: "text-rose-600",
     glow: "shadow-[0_0_0_8px_rgba(244,63,94,0.12)]",
