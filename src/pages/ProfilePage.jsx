@@ -128,29 +128,7 @@ function ProfilePage({ onNavigate }) {
           </div>
 
           <div className="grid grid-cols-2 gap-3 mt-3">
-            <div className="bg-white border border-gray-100 rounded-2xl p-3.5 flex flex-col text-left shadow-sm hover:shadow-md transition-all duration-300">
-              <div className="w-8 h-8 rounded-xl bg-orange-50 border border-orange-100/50 text-orange-600 flex items-center justify-center mb-3">
-                <TempleIcon className="w-4 h-4" />
-              </div>
-              <h5 className="text-xs font-black text-slate-800">
-                Kashi Vishwanath
-              </h5>
-              <p className="text-[9px] font-bold text-slate-400 mt-1">
-                Oct 2023
-              </p>
-            </div>
-
-            <div className="bg-white border border-gray-100 rounded-2xl p-3.5 flex flex-col text-left shadow-sm hover:shadow-md transition-all duration-300">
-              <div className="w-8 h-8 rounded-xl bg-amber-50 border border-amber-100/50 text-amber-700 flex items-center justify-center mb-3">
-                <Footprints className="w-4 h-4" />
-              </div>
-              <h5 className="text-xs font-black text-slate-800">
-                Tirumala Trek
-              </h5>
-              <p className="text-[9px] font-bold text-slate-400 mt-1">
-                Aug 2023
-              </p>
-            </div>
+            {/* Removed static Pilgrim Journey cards as requested */}
           </div>
         </div>
 
