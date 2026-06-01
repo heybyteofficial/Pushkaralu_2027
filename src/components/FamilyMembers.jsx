@@ -485,20 +485,6 @@ function FamilyMembers({ onBack }) {
               </div>
 
               <div className="flex flex-col gap-1">
-                <label htmlFor="member-id" className="text-[11px] font-bold text-slate-700">
-                  ID Number (Optional)
-                </label>
-                <input
-                  id="member-id"
-                  name="idCardNumber"
-                  value={formData.idCardNumber}
-                  onChange={handleFormChange}
-                  className="h-10 rounded-xl border border-slate-200 bg-slate-50 px-3 text-[11px] font-semibold text-slate-700 outline-none focus:ring-2 focus:ring-brand-100 focus:border-brand-300"
-                  placeholder="Enter ID number"
-                />
-              </div>
-
-              <div className="flex flex-col gap-1">
                 <label htmlFor="member-phone" className="text-[11px] font-bold text-slate-700">
                   Contact Number
                 </label>
@@ -515,6 +501,20 @@ function FamilyMembers({ onBack }) {
                   placeholder="Enter phone number"
                 />
                 {formErrors.phone && <p className="text-[10px] font-semibold text-rose-600">{formErrors.phone}</p>}
+              </div>
+
+              <div className="flex flex-col gap-1">
+                <label htmlFor="member-id" className="text-[11px] font-bold text-slate-700">
+                  ID Number (Optional)
+                </label>
+                <input
+                  id="member-id"
+                  name="idCardNumber"
+                  value={formData.idCardNumber}
+                  onChange={handleFormChange}
+                  className="h-10 rounded-xl border border-slate-200 bg-slate-50 px-3 text-[11px] font-semibold text-slate-700 outline-none focus:ring-2 focus:ring-brand-100 focus:border-brand-300"
+                  placeholder="Enter ID number"
+                />
               </div>
 
               <div className="grid grid-cols-2 gap-3 pt-1">
