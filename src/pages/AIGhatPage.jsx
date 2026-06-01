@@ -1,15 +1,13 @@
 import { useState } from "react";
-import { Users, Zap } from "lucide-react";
+import { Clock3, Users, Zap } from "lucide-react";
 import Navbar from "../layouts/Navbar";
 import BottomNav from "../layouts/BottomNav";
 import GhatSuggestionCard from "../components/GhatSuggestionCard";
-import photoMetric from "@/assets/PhotoMetric.png";
 
 const GHATS = [
   {
     id: 1,
     name: "Pushkar Ghat",
-    image: photoMetric,
     crowdPercent: 14,
     crowdLabel: "Low",
     crowdColor: "emerald",
@@ -23,7 +21,6 @@ const GHATS = [
   {
     id: 2,
     name: "Kotilingala Ghat",
-    image: photoMetric,
     crowdPercent: 67,
     crowdLabel: "Moderate",
     crowdColor: "amber",
@@ -37,7 +34,6 @@ const GHATS = [
   {
     id: 3,
     name: "Saraswati Ghat",
-    image: photoMetric,
     crowdPercent: 82,
     crowdLabel: "Crowded",
     crowdColor: "rose",
@@ -51,7 +47,6 @@ const GHATS = [
   {
     id: 4,
     name: "Markandeya Ghat",
-    image: photoMetric,
     crowdPercent: 35,
     crowdLabel: "Low",
     crowdColor: "emerald",
@@ -65,7 +60,6 @@ const GHATS = [
   {
     id: 5,
     name: "Gowthami Ghat",
-    image: photoMetric,
     crowdPercent: 55,
     crowdLabel: "Moderate",
     crowdColor: "amber",
@@ -80,22 +74,28 @@ const GHATS = [
 
 const CROWD_THEME = {
   emerald: {
-    border: "border-emerald-200",
-    bg: "bg-emerald-50",
-    text: "text-emerald-700",
-    dot: "bg-emerald-500",
+    bg: "from-emerald-600 via-emerald-500 to-teal-400",
+    bar: "bg-emerald-300",
+    track: "bg-emerald-950/35",
+    badge: "bg-emerald-950/40 text-emerald-50 border-emerald-300/30",
+    label: "text-emerald-100",
+    percent: "text-white",
   },
   amber: {
-    border: "border-amber-200",
-    bg: "bg-amber-50",
-    text: "text-amber-700",
-    dot: "bg-amber-500",
+    bg: "from-amber-600 via-orange-500 to-yellow-400",
+    bar: "bg-amber-200",
+    track: "bg-amber-950/35",
+    badge: "bg-amber-950/40 text-amber-50 border-amber-300/30",
+    label: "text-amber-100",
+    percent: "text-white",
   },
   rose: {
-    border: "border-rose-200",
-    bg: "bg-rose-50",
-    text: "text-rose-700",
-    dot: "bg-rose-500",
+    bg: "from-rose-700 via-rose-500 to-pink-400",
+    bar: "bg-rose-300",
+    track: "bg-rose-950/35",
+    badge: "bg-rose-950/40 text-rose-50 border-rose-300/30",
+    label: "text-rose-100",
+    percent: "text-white",
   },
 };
 
@@ -129,7 +129,7 @@ function AIGhatPage({ onBack, onNavigate }) {
       <Navbar showBack={true} onBack={onBack} />
 
       <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
-        <div className="rounded-[28px] bg-gradient-to-br from-indigo-600 via-indigo-500 to-cyan-500 px-4 py-5 text-white shadow-lg shadow-indigo-500/20">
+        <div className="rounded-[28px] bg-gradient-to-br from-indigo-700 via-indigo-600 to-cyan-500 px-4 py-5 text-white shadow-lg shadow-indigo-500/20">
           <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.28em] text-white/80">
             <Zap className="h-3.5 w-3.5" />
             AI Powered
@@ -161,7 +161,7 @@ function AIGhatPage({ onBack, onNavigate }) {
           ))}
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
+        <div className="space-y-3">
           {sortedGhats.map((ghat) => {
             const theme = CROWD_THEME[ghat.crowdColor] ?? CROWD_THEME.emerald;
 
@@ -170,41 +170,68 @@ function AIGhatPage({ onBack, onNavigate }) {
                 key={ghat.id}
                 type="button"
                 onClick={() => setSelectedGhat(ghat)}
-                className={`relative overflow-hidden rounded-2xl border bg-white p-3 text-left shadow-sm transition-all duration-200 active:scale-[0.97] ${
-                  ghat.isAIPick ? "border-indigo-200 ring-1 ring-indigo-200" : "border-slate-100"
-                }`}
+                className={`relative w-full overflow-hidden rounded-3xl bg-gradient-to-br ${theme.bg} p-5 text-left shadow-lg transition-all duration-200 active:scale-[0.98]`}
+                style={{ minHeight: "160px" }}
               >
                 {ghat.isAIPick ? (
-                  <div className="absolute right-3 top-3 rounded-full bg-indigo-600 px-2 py-0.5 text-[9px] font-black uppercase tracking-widest text-white shadow-sm">
+                  <div className={`absolute right-4 top-4 rounded-full border px-2.5 py-1 text-[9px] font-black uppercase tracking-widest shadow-sm ${theme.badge}`}>
                     AI Pick
                   </div>
                 ) : null}
 
-                <div className="overflow-hidden rounded-xl">
-                  <img src={ghat.image} alt={ghat.name} className="h-28 w-full object-cover" />
-                </div>
+                <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.2),transparent_40%),linear-gradient(135deg,rgba(255,255,255,0.08),transparent_35%)]" />
+                <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(to_top,rgba(3,7,18,0.42),rgba(3,7,18,0.08)_55%,rgba(255,255,255,0.05))]" />
 
-                <div className="mt-3 space-y-1">
-                  <h2 className="text-sm font-black text-slate-900">{ghat.name}</h2>
-                  <p className="text-[11px] font-semibold text-slate-500">{ghat.bestTime}</p>
-                </div>
-
-                <div className={`mt-3 rounded-xl border ${theme.border} ${theme.bg} p-3`}>
-                  <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-wider text-slate-500">
-                    <span>{ghat.crowdLabel}</span>
-                    <span className={theme.text}>{ghat.crowdPercent}%</span>
+                <div className="relative z-10 flex h-full min-h-[128px] flex-col justify-between">
+                  <div className="pr-16">
+                    <h2 className="text-[17px] font-black leading-tight text-white drop-shadow-sm">
+                      {ghat.name}
+                    </h2>
+                    <p className={`mt-1 text-[12px] font-semibold ${theme.label}`}>{ghat.bestTime}</p>
                   </div>
-                  <div className="mt-2 h-2 rounded-full bg-white/90">
-                    <div
-                      className={`h-2 rounded-full ${theme.dot}`}
-                      style={{ width: `${ghat.crowdPercent}%` }}
-                    />
-                  </div>
-                </div>
 
-                <div className="mt-3 flex items-center gap-2 text-[11px] font-semibold text-slate-500">
-                  <Users className="h-3.5 w-3.5" />
-                  <span>{ghat.travelMins} mins away</span>
+                  <div className="space-y-3">
+                    <div className="flex items-end justify-between gap-3">
+                      <div className="min-w-0">
+                        <div className={`text-[10px] font-black uppercase tracking-[0.3em] ${theme.label}`}>
+                          Live Crowd
+                        </div>
+                        <div className="mt-1 flex items-center gap-2">
+                          <span className={`text-xl font-black leading-none ${theme.percent}`}>
+                            {ghat.crowdPercent}%
+                          </span>
+                          <span className={`rounded-full border px-2 py-1 text-[10px] font-black uppercase tracking-wider ${theme.badge}`}>
+                            {ghat.crowdLabel}
+                          </span>
+                        </div>
+                      </div>
+
+                      {ghat.isAIPick ? (
+                        <div className="flex items-center gap-1.5 rounded-full bg-white/14 px-2.5 py-1.5 text-[10px] font-black uppercase tracking-wider text-white backdrop-blur-sm">
+                          <Zap className="h-3.5 w-3.5" />
+                          Smart Pick
+                        </div>
+                      ) : null}
+                    </div>
+
+                    <div className={`h-2.5 overflow-hidden rounded-full ${theme.track}`}>
+                      <div
+                        className={`h-full rounded-full ${theme.bar}`}
+                        style={{ width: `${ghat.crowdPercent}%` }}
+                      />
+                    </div>
+
+                    <div className="flex items-center justify-between gap-3 text-[11px] font-semibold text-white/90">
+                      <div className="flex items-center gap-1.5">
+                        <Clock3 className="h-3.5 w-3.5" />
+                        <span>{ghat.travelMins} mins away</span>
+                      </div>
+                      <div className="flex items-center gap-1.5 text-right">
+                        <Users className="h-3.5 w-3.5" />
+                        <span>~{ghat.crowdPercent * 15} pilgrims</span>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </button>
             );

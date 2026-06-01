@@ -1,4 +1,6 @@
 import { Clock3, Send, Sparkles } from "lucide-react";
+import PhotoMetric from "@/assets/PhotoMetric.png";
+
 
 const CIRCUMFERENCE = 2 * Math.PI * 22;
 
@@ -60,11 +62,12 @@ function CrowdDensityRing({ percent, crowdColor }) {
 
 function GhatSuggestionCard({ ghat }) {
   const crowdTheme = CROWD_THEME[ghat.crowdColor] ?? CROWD_THEME.emerald;
+  const ghatImage = PhotoMetric;
 
   return (
     <section className="max-w-sm mx-auto bg-white rounded-3xl shadow-xl overflow-hidden">
       <div className="relative overflow-hidden rounded-t-3xl">
-        <img src={ghat.image} alt={`${ghat.name} location`} className="h-[200px] w-full object-cover" />
+        <img src={ghatImage} alt={`${ghat.name} location`} className="h-[200px] w-full object-cover" />
 
         <div className="pointer-events-none absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center justify-center">
           <span className="absolute h-5 w-5 animate-ping rounded-full bg-emerald-400/25" />
