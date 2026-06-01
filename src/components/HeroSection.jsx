@@ -1,7 +1,22 @@
 import { MapPin, Sun, Waves, Megaphone, ChevronRight } from "lucide-react";
 import heroBg from "@/assets/hero-bg.png";
+import modi from "@/assets/modi.png";
+import naidu from "@/assets/naidu.png";
+import pk from "@/assets/pk.png";
+import purandeswari from "@/assets/purandeswari.png";
+import vasu from "@/assets/vasu.png";
 
 function HeroSection() {
+
+  const LEADERS = [
+  { src: modi},
+  { src: naidu},
+  { src: pk},
+  { src: purandeswari},
+  { src: vasu},
+];
+
+
   return (
     <section className="w-full h-72 relative overflow-hidden select-none">
       <img
@@ -9,7 +24,46 @@ function HeroSection() {
         className="absolute inset-0 w-full h-full object-cover"
         alt="A Image showing godavari river"
       />
-      <div className="absolute inset-0 bg-gradient-to-r from-black/60 to-transparent" />
+      <div className="absolute top-4 left-4 z-10 flex gap-1">
+  <div className="w-8 h-8 rounded-full border-2 border-white overflow-hidden bg-white">
+    <img
+      src={modi}
+      alt="Leader 1"
+      className="w-full h-full object-cover scale-[3.0]"
+    />
+  </div>
+
+  <div className="w-8 h-8 rounded-full border-2 border-white overflow-hidden bg-white">
+    <img
+      src={naidu}
+      alt="Leader 2"
+      className="w-full h-full object-cover scale-[2.0]"
+    />
+  </div>
+
+  <div className="w-8 h-8 rounded-full border-2 border-white overflow-hidden bg-white">
+    <img
+      src={pk}
+      alt="Leader 3"
+      className="w-full h-full object-cover scale-[3.0]"
+    />
+  </div>
+  <div className="w-8 h-8 rounded-full border-2 border-white overflow-hidden bg-white">
+    <img
+      src={purandeswari}
+      alt="Leader 4"
+      className="w-full h-full object-cover scale-[3.0]"
+    />
+  </div>
+  <div className="w-8 h-8 rounded-full border-2 border-white overflow-hidden bg-white">
+    <img
+      src={vasu}
+      alt="Leader 5"
+      className="w-full h-full object-cover scale-[2.0]"
+    />
+  </div>
+</div>
+      
 
       <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-md rounded-2xl p-3 shadow-md flex flex-col gap-2 border border-white/40 min-w-[128px]">
         <div className="flex items-center gap-2.5 text-left">
