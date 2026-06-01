@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Clock3, Users, Zap } from "lucide-react";
 import Navbar from "../layouts/Navbar";
 import BottomNav from "../layouts/BottomNav";
@@ -102,6 +102,7 @@ const CROWD_THEME = {
 function AIGhatPage({ onBack, onNavigate }) {
   const [selectedGhat, setSelectedGhat] = useState(null);
   const [filter, setFilter] = useState("all");
+  const detailTopRef = useRef(null);
 
   const sortedGhats = [...GHATS].sort((a, b) => {
     if (filter === "least") return a.crowdPercent - b.crowdPercent;
@@ -110,12 +111,24 @@ function AIGhatPage({ onBack, onNavigate }) {
     return 0;
   });
 
+  useEffect(() => {
+    if (!selectedGhat) return;
+    // scroll the internal detail container to top when a ghat is opened
+    window.setTimeout(() => {
+      try {
+        detailTopRef.current?.scrollTo({ top: 0, behavior: "smooth" });
+      } catch (e) {
+        detailTopRef.current?.scrollIntoView?.({ behavior: "smooth", block: "start" });
+      }
+    }, 80);
+  }, [selectedGhat]);
+
   if (selectedGhat) {
     return (
       <div className="max-w-sm mx-auto min-h-screen bg-gray-50 flex flex-col relative pb-24 shadow-2xl border-x border-gray-200">
         <Navbar showBack={true} onBack={onBack} />
 
-        <div className="flex-1 overflow-y-auto px-4 pt-2 pb-3">
+        <div ref={detailTopRef} className="flex-1 overflow-y-auto px-4 pt-2 pb-3">
           <GhatSuggestionCard ghat={selectedGhat} />
         </div>
 

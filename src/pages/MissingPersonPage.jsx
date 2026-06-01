@@ -333,6 +333,8 @@ function MissingPersonPage({ onBack }) {
   const progressFrameRef = useRef(null);
   const finishTimerRef = useRef(null);
   const scanCardRef = useRef(null);
+  const submitSectionRef = useRef(null);
+  const scanSectionRef = useRef(null);
   const matchedCardRef = useRef(null);
   const autoScrollStageRef = useRef("idle");
 
@@ -464,6 +466,10 @@ function MissingPersonPage({ onBack }) {
         setSearchProgress(0);
         setMatchedFamily(null);
         setSearchStepIndex(0);
+
+        window.setTimeout(() => {
+          submitSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+        }, 200);
       }
     } catch {
       setCameraError("Could not process the selected image.");
@@ -507,6 +513,10 @@ function MissingPersonPage({ onBack }) {
     setSearchProgress(0);
     setMatchedFamily(null);
     setSearchStepIndex(0);
+
+    window.setTimeout(() => {
+      submitSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 200);
   };
 
   const clearMatchTimers = () => {
@@ -570,6 +580,14 @@ function MissingPersonPage({ onBack }) {
     setMatchedFamily(null);
     setSearchProgress(0);
     setScanPhase("loading");
+
+    window.setTimeout(() => {
+      if (scanSectionRef.current) {
+        const yOffset = -80;
+        const y = scanSectionRef.current.getBoundingClientRect().top + window.scrollY + yOffset;
+        window.scrollTo({ top: y, behavior: "smooth" });
+      }
+    }, 300);
 
     const matched = pickClosestMatch(photoPreview);
 
@@ -794,7 +812,7 @@ return (
         )}
 
           {photoPreview && (searchState !== "loading" && scanPhase !== "finishing" && searchState !== "matched") && (
-          <section className="mt-4 rounded-[2rem] border border-slate-200 bg-white p-4 shadow-[0_18px_45px_rgba(15,23,42,0.10)] transition-all duration-500 ease-out">
+          <section ref={submitSectionRef} className="mt-4 rounded-[2rem] border border-slate-200 bg-white p-4 shadow-[0_18px_45px_rgba(15,23,42,0.10)] transition-all duration-500 ease-out">
             <div className="flex items-center justify-between gap-2">
               <div>
                 <p className="text-[9px] font-black uppercase tracking-[0.18em] text-slate-500">Ready to match</p>
@@ -821,6 +839,7 @@ return (
         <AnimatePresence mode="sync" initial={false}>
           {(searchState === "loading" || (scanPhase === "finishing" && searchState !== "matched")) && (
             <motion.div
+              ref={scanSectionRef}
               key="scan"
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
@@ -903,19 +922,17 @@ return (
                       <span className="font-semibold text-slate-500">Relation</span>
                       <span className="font-black text-slate-900">{matchedFamily.relation}</span>
                     </div>
-                    <div className="flex items-center justify-between rounded-2xl bg-white px-3 py-2 border border-slate-200">
-                      <span className="font-semibold text-slate-500">Contact Number</span>
-                      <a
-                        href={`tel:${matchedFamily.phone || DEFAULT_CONTACT_NUMBER}`}
-                        className="font-black text-slate-900"
-                      >
-                        {matchedFamily.phone || DEFAULT_CONTACT_NUMBER}
-                      </a>
-                    </div>
-                    <div className="flex items-center justify-between rounded-2xl bg-white px-3 py-2 border border-slate-200">
-                      <span className="font-semibold text-slate-500">ID Number</span>
-                      <span className="font-black text-slate-900">{matchedFamily.idCardNumber || "Not provided"}</span>
-                    </div>
+
+                    <a
+                      href={`tel:${matchedFamily.phone || DEFAULT_CONTACT_NUMBER}`}
+                      className="mt-1 flex items-center justify-between gap-3 rounded-2xl bg-gradient-to-r from-emerald-600 to-emerald-500 px-4 py-3.5 shadow-lg shadow-emerald-500/25 active:scale-[0.98] transition-all duration-200"
+                    >
+                      <div className="text-left">
+                        <p className="text-[11px] font-black text-white">Contact Family</p>
+                        <p className="mt-1 text-[13px] font-black text-white">{matchedFamily.phone || DEFAULT_CONTACT_NUMBER}</p>
+                      </div>
+                      <div className="rounded-full bg-white/20 px-3 py-2 text-white font-black">Call</div>
+                    </a>
                   </div>
                 </div>
               </section>

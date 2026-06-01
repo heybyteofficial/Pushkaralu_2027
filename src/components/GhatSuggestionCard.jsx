@@ -69,11 +69,7 @@ function GhatSuggestionCard({ ghat }) {
       <div className="relative overflow-hidden rounded-t-3xl">
         <img src={ghatImage} alt={`${ghat.name} location`} className="h-[200px] w-full object-cover" />
 
-        <div className="pointer-events-none absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center justify-center">
-          <span className="absolute h-5 w-5 animate-ping rounded-full bg-emerald-400/25" />
-          <span className="absolute h-7 w-7 rounded-full border border-emerald-400/20" />
-          <span className={`relative h-4 w-4 rounded-full bg-emerald-500 ${crowdTheme.glow}`} />
-        </div>
+        {/* removed green location dot overlay as requested */}
       </div>
 
       <div className="p-4">
