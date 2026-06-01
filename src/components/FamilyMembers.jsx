@@ -230,7 +230,12 @@ function FamilyMembers({ onBack }) {
   };
 
   const handleFormChange = (event) => {
-    const { name, value } = event.target;
+    let { name, value } = event.target;
+    if (name === "phone") {
+      // allow digits only and limit to 10 characters
+      value = String(value || "").replace(/\D/g, "").slice(0, 10);
+    }
+
     setFormData((prev) => ({ ...prev, [name]: value }));
     setFormErrors((prev) => ({ ...prev, [name]: "" }));
   };
@@ -250,8 +255,9 @@ function FamilyMembers({ onBack }) {
     if (!formData.gender) {
       errors.gender = "Gender is required";
     }
-    if (!formData.phone.trim()) {
-      errors.phone = "Contact number is required";
+    const phoneDigits = String(formData.phone || "").replace(/\D/g, "");
+    if (!phoneDigits || phoneDigits.length !== 10) {
+      errors.phone = "Enter a valid 10-digit phone number";
     }
 
     return errors;
@@ -500,6 +506,9 @@ function FamilyMembers({ onBack }) {
                   id="member-phone"
                   name="phone"
                   type="tel"
+                  inputMode="numeric"
+                  pattern="\d{10}"
+                  maxLength={10}
                   value={formData.phone}
                   onChange={handleFormChange}
                   className="h-10 rounded-xl border border-slate-200 bg-slate-50 px-3 text-[11px] font-semibold text-slate-700 outline-none focus:ring-2 focus:ring-brand-100 focus:border-brand-300"
