@@ -16,6 +16,11 @@ import {
 import Navbar from "../layouts/Navbar";
 import apLogo from "@/assets/ap-govt-logo.png";
 import { users as initialFamilyUsers } from "../data/family";
+import leader1 from "@/assets/leaders/1.png"; // your image paths
+import leader2 from "@/assets/leaders/2.png";
+import leader3 from "@/assets/leaders/3.png";
+import leader4 from "@/assets/leaders/4.png";
+import leader5 from "@/assets/leaders/5.png";
 
 const STORAGE_KEY = "pushkaralu_missing_reports";
 const FAMILY_STORAGE_KEY = "pushkaralu_family_members";
@@ -64,6 +69,13 @@ function ScanCard({ progress, stepIndex, phase }) {
     },
   ];
   const centralValue = Math.round(progress);
+  const LEADERS = [
+  { src: leader1, border: "#ff8c00" },
+  { src: leader2, border: "#ffd700" },
+  { src: leader3, border: "#e63232" },
+  { src: leader4, border: "#ff8c00" },
+  { src: leader5, border: "#ffd700" },
+];
 
   const nodeProgressClass =
     progress < 25 ? "opacity-35" : progress < 50 ? "opacity-60" : progress < 75 ? "opacity-80" : "opacity-100";
