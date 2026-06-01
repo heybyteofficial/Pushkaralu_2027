@@ -250,6 +250,9 @@ function FamilyMembers({ onBack }) {
     if (!formData.gender) {
       errors.gender = "Gender is required";
     }
+    if (!formData.phone.trim()) {
+      errors.phone = "Contact number is required";
+    }
 
     return errors;
   };
@@ -273,7 +276,7 @@ function FamilyMembers({ onBack }) {
       age: Number(formData.age),
       gender: formData.gender,
       idCardNumber: formData.idCardNumber.trim() || "Not Provided",
-      phone: formData.phone.trim() || formData.idCardNumber.trim() || "Not Provided",
+      phone: formData.phone.trim(),
       avatar:
         capturedImage ||
         "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&auto=format&fit=crop&q=80",
@@ -491,16 +494,18 @@ function FamilyMembers({ onBack }) {
 
               <div className="flex flex-col gap-1">
                 <label htmlFor="member-phone" className="text-[11px] font-bold text-slate-700">
-                  Contact Number (Optional)
+                  Contact Number
                 </label>
                 <input
                   id="member-phone"
                   name="phone"
+                  type="tel"
                   value={formData.phone}
                   onChange={handleFormChange}
                   className="h-10 rounded-xl border border-slate-200 bg-slate-50 px-3 text-[11px] font-semibold text-slate-700 outline-none focus:ring-2 focus:ring-brand-100 focus:border-brand-300"
                   placeholder="Enter phone number"
                 />
+                {formErrors.phone && <p className="text-[10px] font-semibold text-rose-600">{formErrors.phone}</p>}
               </div>
 
               <div className="grid grid-cols-2 gap-3 pt-1">
