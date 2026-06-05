@@ -9,7 +9,7 @@ const BUS_ROUTES = [
     id: 1,
     busNo: "Bus No. 1",
     start: "Pedda Anjaneya Swamy Temple",
-    end: "Uptron Computer Center",
+    end: "Computer Center",
     route: "Pedda Anjaneya Swamy Temple (near Pushkar Ghat) to Uptron Computer Center (near the Railway Station)",
     stops: ["Pedda Anjaneya Swamy Temple", "Pushkar Ghat Entrance", "Devi Chowk Junction", "Railway Station East Gate", "Uptron Computer Center"],
     status: "Approaching Stop",
@@ -157,8 +157,8 @@ function TransportPage({ onBack, onNavigate }) {
               key={route.id}
               onClick={() => handleSelectRoute(route.id)}
               className={`bg-white rounded-2xl border transition-all duration-300 shadow-sm cursor-pointer ${isSelected
-                  ? "border-indigo-600 ring-2 ring-indigo-100 shadow-indigo-100/30"
-                  : "border-slate-200 hover:border-slate-350"
+                ? "border-indigo-600 ring-2 ring-indigo-100 shadow-indigo-100/30"
+                : "border-slate-200 hover:border-slate-350"
                 }`}
             >
               <div className="p-4 flex flex-col text-left">
@@ -221,10 +221,10 @@ function TransportPage({ onBack, onNavigate }) {
                         <div key={stop} className="flex gap-4 items-start text-left">
                           <div className="w-4 shrink-0 relative flex flex-col items-center">
                             <div className={`w-3.5 h-3.5 rounded-full border-2 border-white flex items-center justify-center z-10 shadow-sm ${isFirst
-                                ? "bg-emerald-500"
-                                : isLast
-                                  ? "bg-rose-500"
-                                  : "bg-indigo-600"
+                              ? "bg-emerald-500"
+                              : isLast
+                                ? "bg-rose-500"
+                                : "bg-indigo-600"
                               }`} />
                             {!isLast && (
                               <div
