@@ -12,7 +12,7 @@ function Home({ onNavigate }) {
       <div className="flex-1 overflow-y-auto">
         <HeroSection />
         <LiveStatus />
-        <QuickServices />
+        <QuickServices onNavigate={onNavigate} />
       </div>
       <ChatBanner />
       <BottomNav activeTab="home" onTabSelect={onNavigate} />

@@ -46,7 +46,7 @@ const SERVICES_DATA = [
     icon: Landmark,
     iconColor: "text-purple-600",
     bgColor: "bg-purple-50",
-    label: "Temple Queue",
+    label: "Temples-Visit",
   },
   {
     id: "toilets",
@@ -64,7 +64,7 @@ const SERVICES_DATA = [
   },
 ];
 
-function QuickServices() {
+function QuickServices({ onNavigate }) {
   return (
     <div className="px-4 mt-5 select-none">
       <div className="flex items-center justify-between mb-3.5">
@@ -80,6 +80,14 @@ function QuickServices() {
         {SERVICES_DATA.map(({ id, icon: IconComponent, iconColor, bgColor, label, hasBadge }) => (
           <button
             key={id}
+            onClick={() => {
+              if (id === "live-transport" && onNavigate) {
+                onNavigate("transport");
+              }
+              if (id === "temple-queue" && onNavigate) {
+                onNavigate("temples");
+              }
+            }}
             className="relative flex items-center gap-3 bg-white rounded-2xl p-3 shadow-sm border border-gray-100 hover:border-gray-200 active:scale-98 transition-all duration-200 text-left min-h-[58px]"
           >
             {hasBadge && (

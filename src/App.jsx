@@ -5,6 +5,8 @@ import MissingPersonPage from "./pages/MissingPersonPage";
 import ProfilePage from "./pages/ProfilePage";
 import FamilyMembers from "./components/FamilyMembers";
 import AIGhatPage from "./pages/AIGhatPage";
+import TransportPage from "./pages/TransportPage";
+import TemplesPage from "./pages/TemplesPage";
 
 function App() {
   const [currentScreen, setCurrentScreen] = useState("home");
@@ -28,6 +30,24 @@ function App() {
 
   if (currentScreen === "profile") {
     return <ProfilePage onNavigate={setCurrentScreen} />;
+  }
+
+  if (currentScreen === "transport") {
+    return (
+      <TransportPage
+        onBack={() => setCurrentScreen("home")}
+        onNavigate={setCurrentScreen}
+      />
+    );
+  }
+
+  if (currentScreen === "temples") {
+    return (
+      <TemplesPage
+        onBack={() => setCurrentScreen("home")}
+        onNavigate={setCurrentScreen}
+      />
+    );
   }
 
   if (currentScreen === "family") {
