@@ -9,7 +9,7 @@ const BUS_ROUTES = [
     id: 1,
     busNo: "Bus No. 1",
     start: "Pedda Anjaneya Swamy Temple",
-    end: "Computer Center",
+    end: "Junction",
     route: "Pedda Anjaneya Swamy Temple (near Pushkar Ghat) to Uptron Computer Center (near the Railway Station)",
     stops: ["Pedda Anjaneya Swamy Temple", "Pushkar Ghat Entrance", "Devi Chowk Junction", "Railway Station East Gate", "Uptron Computer Center"],
     status: "Approaching Stop",
