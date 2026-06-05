@@ -540,47 +540,47 @@ function FamilyMembers({ onBack }) {
 
         {activeView === "list" && (
           <section className="bg-white border border-slate-200 rounded-3xl p-4 shadow-sm mb-4">
-          <h3 className="text-xs font-black text-slate-800 uppercase tracking-wider">Add Member</h3>
-          <p className="text-[10px] text-slate-500 font-semibold mt-1.5">
-            Use camera scanner or upload a file to register family details.
-          </p>
+            <h3 className="text-xs font-black text-slate-800 uppercase tracking-wider">Add Member</h3>
+            <p className="text-[10px] text-slate-500 font-semibold mt-1.5">
+              Use camera scanner or upload a file to register family details.
+            </p>
 
-          <div className="grid grid-cols-2 gap-2 mt-4">
+            <div className="grid grid-cols-2 gap-2 mt-4">
 
-            <button
-              onClick={handleSelfieCam}
-              disabled={isProcessing}
-              className="rounded-2xl bg-brand-600 hover:bg-brand-700 disabled:opacity-60 text-white px-3 py-3 flex flex-col items-center justify-center gap-1.5 transition-all duration-300 active:scale-[0.98]"
-              aria-label="Open selfie camera"
-            >
-              <UserRound className="w-5 h-5" />
-              <span className="text-[11px] font-black">Selfie Cam</span>
-            </button>
+              <button
+                onClick={handleSelfieCam}
+                disabled={isProcessing}
+                className="rounded-2xl bg-brand-600 hover:bg-brand-700 disabled:opacity-60 text-white px-3 py-3 flex flex-col items-center justify-center gap-1.5 transition-all duration-300 active:scale-[0.98]"
+                aria-label="Open selfie camera"
+              >
+                <UserRound className="w-5 h-5" />
+                <span className="text-[11px] font-black">Selfie Cam</span>
+              </button>
 
-            <button
-              onClick={handleUploadClick}
-              disabled={isProcessing}
-              className="rounded-2xl border border-slate-200 bg-slate-50 hover:bg-slate-100 disabled:opacity-60 px-3 py-3 flex flex-col items-center justify-center gap-1.5 transition-all duration-300 active:scale-[0.98]"
-            >
-              <UploadCloud className="w-5 h-5 text-slate-600" />
-              <span className="text-[11px] font-black text-slate-700">Upload File</span>
-            </button>
-          </div>
-
-          <input
-            type="file"
-            ref={fileInputRef}
-            onChange={handleFileChange}
-            className="hidden"
-            accept="image/*,application/pdf"
-          />
-
-          {isProcessing && (
-            <div className="mt-3 rounded-xl border border-brand-100 bg-brand-50 px-3 py-2 flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-brand-600 animate-pulse"></div>
-              <p className="text-[10px] font-bold text-brand-700">{processingText}</p>
+              <button
+                onClick={handleUploadClick}
+                disabled={isProcessing}
+                className="rounded-2xl border border-slate-200 bg-slate-50 hover:bg-slate-100 disabled:opacity-60 px-3 py-3 flex flex-col items-center justify-center gap-1.5 transition-all duration-300 active:scale-[0.98]"
+              >
+                <UploadCloud className="w-5 h-5 text-slate-600" />
+                <span className="text-[11px] font-black text-slate-700">Upload File</span>
+              </button>
             </div>
-          )}
+
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handleFileChange}
+              className="hidden"
+              accept="image/*,application/pdf"
+            />
+
+            {isProcessing && (
+              <div className="mt-3 rounded-xl border border-brand-100 bg-brand-50 px-3 py-2 flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-brand-600 animate-pulse"></div>
+                <p className="text-[10px] font-bold text-brand-700">{processingText}</p>
+              </div>
+            )}
           </section>
         )}
 
