@@ -7,6 +7,7 @@ import FamilyMembers from "./components/FamilyMembers";
 import AIGhatPage from "./pages/AIGhatPage";
 import TransportPage from "./pages/TransportPage";
 import TemplesPage from "./pages/TemplesPage";
+import FoodWaterPage from "./pages/FoodWaterPage";
 
 function App() {
   const [currentScreen, setCurrentScreen] = useState("home");
@@ -44,6 +45,15 @@ function App() {
   if (currentScreen === "temples") {
     return (
       <TemplesPage
+        onBack={() => setCurrentScreen("home")}
+        onNavigate={setCurrentScreen}
+      />
+    );
+  }
+
+  if (currentScreen === "food-water") {
+    return (
+      <FoodWaterPage
         onBack={() => setCurrentScreen("home")}
         onNavigate={setCurrentScreen}
       />

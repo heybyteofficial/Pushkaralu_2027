@@ -130,10 +130,10 @@ function TransportPage({ onBack, onNavigate }) {
   };
 
   return (
-    <div className="w-screen h-[100dvh] flex flex-col overflow-hidden bg-[#f3f6f9]">
+    <div className="w-screen max-w-sm mx-auto min-h-screen bg-[#f3f6f9] flex flex-col relative pb-36 font-sans shadow-2xl border-x border-gray-200">
       <Navbar showBack={true} onBack={onBack} />
 
-      <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3">
+      <div className="flex-1 px-4 py-4 space-y-3">
         <div className="flex items-center justify-between pb-1">
           <div className="flex flex-col text-left">
             <h3 className="text-xs font-black text-slate-800 uppercase tracking-wider">APSRTC Bus Services</h3>

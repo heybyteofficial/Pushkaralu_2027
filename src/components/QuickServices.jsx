@@ -87,6 +87,9 @@ function QuickServices({ onNavigate }) {
               if (id === "temple-queue" && onNavigate) {
                 onNavigate("temples");
               }
+              if (id === "food-water" && onNavigate) {
+                onNavigate("food-water");
+              }
             }}
             className="relative flex items-center gap-3 bg-white rounded-2xl p-3 shadow-sm border border-gray-100 hover:border-gray-200 active:scale-98 transition-all duration-200 text-left min-h-[58px]"
           >
