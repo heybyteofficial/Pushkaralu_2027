@@ -227,7 +227,7 @@ function TemplesPage({ onBack, onNavigate }) {
         <div
           ref={scrollContainerRef}
           onScroll={handleScroll}
-          className="w-full h-[470px] flex items-center overflow-x-auto gap-4 snap-x snap-mandatory scrollbar-hide px-10"
+          className="w-full h-[400px] flex items-center overflow-x-auto gap-4 snap-x snap-mandatory scrollbar-hide px-10"
         >
           {filteredTemples.map((temple) => {
             const isExpanded = expandedCardId === temple.id;
@@ -239,7 +239,7 @@ function TemplesPage({ onBack, onNavigate }) {
                 onMouseUp={(e) => handleMouseUp(e, temple.id)}
                 onTouchStart={handleTouchStart}
                 onTouchEnd={(e) => handleTouchEnd(e, temple.id)}
-                className="w-[280px] h-[460px] shrink-0 snap-center cursor-pointer select-none"
+                className="w-[280px] h-[380px] shrink-0 snap-center cursor-pointer select-none"
               >
                 <div
                   className="w-full h-full bg-white rounded-2xl border border-slate-200/80 shadow-md overflow-hidden flex flex-col transition-all duration-300 text-left relative"
@@ -247,7 +247,7 @@ function TemplesPage({ onBack, onNavigate }) {
                   {/* COVER IMAGE SECTION */}
                   <div
                     className={`relative w-full overflow-hidden transition-all duration-500 shrink-0 ${
-                      isExpanded ? "h-0 opacity-0" : "h-[290px] opacity-100"
+                      isExpanded ? "h-0 opacity-0" : "h-[230px] opacity-100"
                     }`}
                   >
                     <img
