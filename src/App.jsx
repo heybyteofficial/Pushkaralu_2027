@@ -8,6 +8,7 @@ import AIGhatPage from "./pages/AIGhatPage";
 import TransportPage from "./pages/TransportPage";
 import TemplesPage from "./pages/TemplesPage";
 import FoodWaterPage from "./pages/FoodWaterPage";
+import ToiletLocatorPage from "./pages/ToiletLocatorPage";
 
 function App() {
   const [currentScreen, setCurrentScreen] = useState("home");
@@ -54,6 +55,15 @@ function App() {
   if (currentScreen === "food-water") {
     return (
       <FoodWaterPage
+        onBack={() => setCurrentScreen("home")}
+        onNavigate={setCurrentScreen}
+      />
+    );
+  }
+
+  if (currentScreen === "toilets") {
+    return (
+      <ToiletLocatorPage
         onBack={() => setCurrentScreen("home")}
         onNavigate={setCurrentScreen}
       />

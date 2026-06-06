@@ -90,6 +90,10 @@ const INITIAL_WATER_ZONES = [
 ];
 
 function FoodWaterPage({ onBack, onNavigate }) {
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
   const [foodCenters, setFoodCenters] = useState(INITIAL_FOOD_CENTERS);
   const [waterZones, setWaterZones] = useState(INITIAL_WATER_ZONES);
   
