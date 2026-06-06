@@ -18,6 +18,8 @@ import {
 } from "lucide-react";
 import Navbar from "../layouts/Navbar";
 import BottomNav from "../layouts/BottomNav";
+import foodCover from "../assets/food_cover.png";
+import waterCover from "../assets/water_cover.png";
 
 const INITIAL_FOOD_CENTERS = [
   {
@@ -102,6 +104,9 @@ function FoodWaterPage({ onBack, onNavigate }) {
   
   // Expanded Navigation Route state
   const [expandedRouteId, setExpandedRouteId] = useState(null);
+  
+  // Card Expansion State
+  const [expandedCardId, setExpandedCardId] = useState(null);
   
   // Live Simulation Loading/Feedback states
   const [isSimulatingFood, setIsSimulatingFood] = useState(false);
@@ -379,14 +384,38 @@ function FoodWaterPage({ onBack, onNavigate }) {
 
           <div className="space-y-3">
             {displayItems.map((item) => {
-              const isExpanded = expandedRouteId === item.id;
+              const isCardExpanded = expandedCardId === item.id;
+              const isRouteExpanded = expandedRouteId === item.id;
               const isFood = item.type === "food";
               
               return (
                 <div 
                   key={item.id}
-                  className="bg-white rounded-2xl border border-slate-200/60 overflow-hidden shadow-sm flex flex-col transition-all duration-300"
+                  onClick={() => setExpandedCardId(isCardExpanded ? null : item.id)}
+                  className="bg-white rounded-2xl border border-slate-200/60 overflow-hidden shadow-sm flex flex-col transition-all duration-300 cursor-pointer hover:border-slate-350 select-none"
                 >
+                  {/* Card Cover Image */}
+                  <div className="relative w-full h-36 bg-slate-100 overflow-hidden shrink-0">
+                    <img 
+                      src={isFood ? foodCover : waterCover} 
+                      className="w-full h-full object-cover transition-transform duration-500 hover:scale-102" 
+                      alt={isFood ? "Food Center Cover" : "Water Zone Cover"} 
+                    />
+                    {/* Distance overlay pill */}
+                    <span className="absolute top-3 left-3 bg-white/95 text-slate-800 text-[10px] font-black px-2.5 py-1 rounded-full shadow-md flex items-center gap-1">
+                      <MapPin className="w-3.5 h-3.5 text-slate-500" />
+                      {item.distance}
+                    </span>
+                    {/* Type badge overlay */}
+                    <span className={`absolute top-3 right-3 text-[9px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full shadow-md border ${
+                      isFood 
+                        ? "bg-orange-500 text-white border-orange-400" 
+                        : "bg-sky-500 text-white border-sky-400"
+                    }`}>
+                      {isFood ? "Annadhanam" : "Water Station"}
+                    </span>
+                  </div>
+
                   {/* Card Main Block */}
                   <div className="p-4 flex flex-col text-left">
                     <div className="flex items-start justify-between gap-3">
@@ -399,142 +428,147 @@ function FoodWaterPage({ onBack, onNavigate }) {
                         </p>
                       </div>
 
-                      <span className={`inline-flex text-[8.5px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full border shrink-0 ${
-                        isFood 
-                          ? "bg-orange-50 text-orange-700 border-orange-200" 
-                          : "bg-sky-50 text-sky-700 border-sky-200"
-                      }`}>
-                        {item.capacityPercent}% Capacity
-                      </span>
-                    </div>
-
-                    {/* Proximity Details: 2-Column + Full-Width Row Grid Layout (Spacious & Responsively Clean) */}
-                    <div className="mt-3 grid grid-cols-2 gap-x-4 gap-y-2 text-[10.5px] font-bold text-slate-600 bg-slate-50 border border-slate-100 rounded-xl p-3">
-                      {/* Distance info */}
-                      <div className="flex items-center gap-2">
-                        <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                        <div className="flex flex-col text-left">
-                          <span className="text-[7.5px] font-black uppercase tracking-wider text-slate-400 leading-none">Distance</span>
-                          <span className="text-slate-800 font-black mt-0.5 leading-none">{item.distance}</span>
-                        </div>
-                      </div>
-                      
-                      {/* Queue / Outlets info */}
-                      <div className="flex items-center gap-2">
-                        <Clock className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                        <div className="flex flex-col text-left">
-                          <span className="text-[7.5px] font-black uppercase tracking-wider text-slate-400 leading-none">
-                            {isFood ? "Queue Wait" : "Dispenser"}
-                          </span>
-                          <span className="text-slate-800 font-black mt-0.5 leading-none">
-                            {isFood ? `${item.waitMins} mins` : "4 Outlets"}
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* Serving Window - Full Width row */}
-                      <div className="col-span-2 border-t border-slate-200/50 pt-2 flex items-center gap-2">
-                        <Info className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                        <div className="flex flex-col text-left">
-                          <span className="text-[7.5px] font-black uppercase tracking-wider text-slate-400 leading-none font-sans">Serving Window</span>
-                          <span className="text-slate-700 font-semibold mt-0.5 leading-none">{item.servingWindow}</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Supply level progress bar */}
-                    <div className="mt-3">
-                      <div className="flex items-center justify-between text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">
-                        <span>Supply Fill Status</span>
-                        <span className="text-slate-700 font-extrabold">{item.capacityPercent}%</span>
-                      </div>
-                      <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                        <div 
-                          className={`h-full rounded-full transition-all duration-700 ${
-                            isFood ? "bg-orange-500" : "bg-sky-500"
-                          }`}
-                          style={{ width: `${item.capacityPercent}%` }}
-                        />
-                      </div>
-                    </div>
-
-                    {/* Dynamic State Info Box */}
-                    <div className="mt-3 flex items-start gap-2.5 border border-slate-100 bg-white/50 p-2.5 rounded-xl">
-                      {isFood ? (
-                        <>
-                          <div className="w-6 h-6 rounded-md bg-orange-50 text-orange-600 flex items-center justify-center shrink-0 mt-0.5">
-                            <Utensils className="w-3.5 h-3.5" />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <span className="text-[8px] font-black uppercase tracking-wider text-orange-600">Current Live Meal Batch</span>
-                            <p className="text-[10.5px] text-slate-700 font-semibold leading-snug mt-0.5">
-                              {item.statusText}
-                            </p>
-                          </div>
-                        </>
-                      ) : (
-                        <>
-                          <div className="w-6 h-6 rounded-md bg-sky-50 text-sky-600 flex items-center justify-center shrink-0 mt-0.5">
-                            <Waves className="w-3.5 h-3.5" />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <span className="text-[8px] font-black uppercase tracking-wider text-sky-600">Purification & Flow Metrics</span>
-                            <p className="text-[10.5px] text-slate-700 font-semibold leading-snug mt-0.5">
-                              {item.statusText}
-                            </p>
-                          </div>
-                        </>
-                      )}
-                    </div>
-
-                    {/* Bottom Sponsors and Quick Actions */}
-                    {isFood && item.isSponsored && (
-                      <div className="mt-2 flex items-center gap-1 text-[8.5px] font-bold text-slate-400">
-                        <Heart className="w-3 h-3 text-rose-500 fill-rose-500" />
-                        <span>Sponsored by <strong className="text-slate-600">{item.sponsorName}</strong></span>
-                      </div>
-                    )}
-
-                    {!isFood && (
-                      <div className="mt-2 flex items-center gap-2.5 text-[8.5px] font-extrabold text-slate-450 uppercase tracking-wider">
-                        <span className="flex items-center gap-0.5 text-slate-500">
-                          <Thermometer className="w-3 h-3 text-sky-500" />
-                          {item.tempCelsius}°C Temp
-                        </span>
-                        <span>•</span>
-                        <span className="text-sky-700 font-black">
-                          {item.waterQuality}
+                      <div className="shrink-0 mt-0.5">
+                        <span className="text-[10px] font-bold text-blue-600 hover:underline">
+                          {isCardExpanded ? "Tap to Collapse" : "Tap for Info"}
                         </span>
                       </div>
-                    )}
+                    </div>
 
-                    {/* Card Actions Row */}
-                    <div className="mt-3.5 flex items-center justify-between border-t border-slate-100 pt-3">
-                      <div className="flex items-center gap-1.5 text-[8.5px] font-bold uppercase tracking-wider text-slate-400">
-                        {isFood ? (
-                          <span className="text-emerald-600 font-black">{item.safetyRating}</span>
-                        ) : (
-                          <span className="text-slate-500">TDS: {item.tdsPpm} PPM (Perfect)</span>
+                    {isCardExpanded && (
+                      <div className="mt-3.5 space-y-3.5 animate-fade-in" onClick={(e) => e.stopPropagation()}>
+                        {/* Proximity Details: 2-Column + Full-Width Row Grid Layout */}
+                        <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-[10.5px] font-bold text-slate-600 bg-slate-50 border border-slate-100 rounded-xl p-3">
+                          {/* Distance info */}
+                          <div className="flex items-center gap-2">
+                            <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                            <div className="flex flex-col text-left">
+                              <span className="text-[7.5px] font-black uppercase tracking-wider text-slate-400 leading-none">Distance</span>
+                              <span className="text-slate-800 font-black mt-0.5 leading-none">{item.distance}</span>
+                            </div>
+                          </div>
+                          
+                          {/* Queue / Outlets info */}
+                          <div className="flex items-center gap-2">
+                            <Clock className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                            <div className="flex flex-col text-left">
+                              <span className="text-[7.5px] font-black uppercase tracking-wider text-slate-400 leading-none">
+                                {isFood ? "Queue Wait" : "Dispenser"}
+                              </span>
+                              <span className="text-slate-800 font-black mt-0.5 leading-none">
+                                {isFood ? `${item.waitMins} mins` : "4 Outlets"}
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Serving Window - Full Width row */}
+                          <div className="col-span-2 border-t border-slate-200/50 pt-2 flex items-center gap-2">
+                            <Info className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                            <div className="flex flex-col text-left">
+                              <span className="text-[7.5px] font-black uppercase tracking-wider text-slate-400 leading-none font-sans">Serving Window</span>
+                              <span className="text-slate-700 font-semibold mt-0.5 leading-none">{item.servingWindow}</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Supply level progress bar */}
+                        <div>
+                          <div className="flex items-center justify-between text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">
+                            <span>Supply Fill Status</span>
+                            <span className="text-slate-700 font-extrabold">{item.capacityPercent}%</span>
+                          </div>
+                          <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                            <div 
+                              className={`h-full rounded-full transition-all duration-700 ${
+                                isFood ? "bg-orange-500" : "bg-sky-500"
+                              }`}
+                              style={{ width: `${item.capacityPercent}%` }}
+                            />
+                          </div>
+                        </div>
+
+                        {/* Dynamic State Info Box */}
+                        <div className="mt-3 flex items-start gap-2.5 border border-slate-100 bg-white/50 p-2.5 rounded-xl">
+                          {isFood ? (
+                            <>
+                              <div className="w-6 h-6 rounded-md bg-orange-50 text-orange-600 flex items-center justify-center shrink-0 mt-0.5">
+                                <Utensils className="w-3.5 h-3.5" />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <span className="text-[8px] font-black uppercase tracking-wider text-orange-600">Current Live Meal Batch</span>
+                                <p className="text-[10.5px] text-slate-700 font-semibold leading-snug mt-0.5">
+                                  {item.statusText}
+                                </p>
+                              </div>
+                            </>
+                          ) : (
+                            <>
+                              <div className="w-6 h-6 rounded-md bg-sky-50 text-sky-600 flex items-center justify-center shrink-0 mt-0.5">
+                                <Waves className="w-3.5 h-3.5" />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <span className="text-[8px] font-black uppercase tracking-wider text-sky-600">Purification & Flow Metrics</span>
+                                <p className="text-[10.5px] text-slate-700 font-semibold leading-snug mt-0.5">
+                                  {item.statusText}
+                                </p>
+                              </div>
+                            </>
+                          )}
+                        </div>
+
+                        {/* Bottom Sponsors and Quick Actions */}
+                        {isFood && item.isSponsored && (
+                          <div className="flex items-center gap-1 text-[8.5px] font-bold text-slate-400">
+                            <Heart className="w-3.5 h-3.5 text-rose-500 fill-rose-500" />
+                            <span>Sponsored by <strong className="text-slate-600">{item.sponsorName}</strong></span>
+                          </div>
                         )}
-                      </div>
 
-                      <button
-                        onClick={() => toggleRouteExpand(item.id)}
-                        className={`text-[9.5px] font-black px-3.5 py-1.5 rounded-xl flex items-center gap-1 active:scale-95 transition-all shadow-sm ${
-                          isExpanded 
-                            ? "bg-slate-100 hover:bg-slate-200 text-slate-700" 
-                            : "bg-[#11223f] hover:bg-[#1f355c] text-white"
-                        }`}
-                      >
-                        <Navigation className="w-3 h-3" />
-                        {isExpanded ? "Hide Map" : "Navigate Route"}
-                      </button>
-                    </div>
+                        {!isFood && (
+                          <div className="flex items-center gap-2.5 text-[8.5px] font-extrabold text-slate-450 uppercase tracking-wider">
+                            <span className="flex items-center gap-0.5 text-slate-500">
+                              <Thermometer className="w-3.5 h-3.5 text-sky-500" />
+                              {item.tempCelsius}°C Temp
+                            </span>
+                            <span>•</span>
+                            <span className="text-sky-700 font-black">
+                              {item.waterQuality}
+                            </span>
+                          </div>
+                        )}
+
+                        {/* Card Actions Row */}
+                        <div className="mt-3.5 flex items-center justify-between border-t border-slate-100 pt-3">
+                          <div className="flex items-center gap-1.5 text-[8.5px] font-bold uppercase tracking-wider text-slate-400">
+                            {isFood ? (
+                              <span className="text-emerald-600 font-black">{item.safetyRating}</span>
+                            ) : (
+                              <span className="text-slate-500">TDS: {item.tdsPpm} PPM (Perfect)</span>
+                            )}
+                          </div>
+
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              toggleRouteExpand(item.id);
+                            }}
+                            className={`text-[9.5px] font-black px-3.5 py-1.5 rounded-xl flex items-center gap-1 active:scale-95 transition-all shadow-sm ${
+                              isRouteExpanded 
+                                ? "bg-slate-100 hover:bg-slate-200 text-slate-700" 
+                                : "bg-[#11223f] hover:bg-[#1f355c] text-white"
+                            }`}
+                          >
+                            <Navigation className="w-3 h-3" />
+                            {isRouteExpanded ? "Hide Map" : "Navigate Route"}
+                          </button>
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                   {/* EXPANDABLE NAVIGATION VIEW */}
-                  {isExpanded && (
-                    <div className="border-t border-slate-150 bg-slate-50/70 p-4 rounded-b-2xl animate-fade-in text-left">
+                  {isRouteExpanded && isCardExpanded && (
+                    <div className="border-t border-slate-150 bg-slate-50/70 p-4 rounded-b-2xl animate-fade-in text-left" onClick={(e) => e.stopPropagation()}>
                       <p className="text-[9px] font-black uppercase tracking-wider text-slate-400 mb-3">
                         Pilgrim Proximity Navigation Overlay
                       </p>
