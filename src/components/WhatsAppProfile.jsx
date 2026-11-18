@@ -210,21 +210,16 @@ function WhatsAppProfile({
         {screen === "main" && (
           <>
             <div className="flex flex-col items-center px-4 pb-4">
-              <div className="relative">
-                <PushkarAvatar className="h-28 w-28" />
-                <span className="absolute bottom-1 right-0 flex h-7 w-7 items-center justify-center rounded-full border-[3px] border-white bg-[#25d366]">
-                  <svg viewBox="0 0 16 16" className="h-3.5 w-3.5 overflow-visible" aria-hidden="true">
-                    <path d="M3.8 8.3 6.6 11.1 12.2 5.2" fill="none" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                </span>
-              </div>
+              <PushkarAvatar className="h-28 w-28" />
               <div className="mt-3 flex items-center gap-1.5">
                 <h1 className="text-[22px] font-semibold text-slate-900">Pushkar AI</h1>
-                <span className="flex h-4 w-4 items-center justify-center rounded-full bg-[#25d366]">
-                  <svg viewBox="0 0 16 16" className="h-3 w-3 overflow-visible" aria-hidden="true">
-                    <path d="M4.2 8.3 6.7 10.8 11.8 5.4" fill="none" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                </span>
+                <svg viewBox="0 0 40 40" className="h-[18px] w-[18px] overflow-visible" aria-label="Verified">
+                  <path
+                    fill="#0095F6"
+                    d="M19.998 3.094 14.638 0l-2.972 5.15H5.432v6.354L0 14.64 3.094 20 0 25.359l5.432 3.137v5.905h5.975L14.638 40l5.36-3.094L25.359 40l3.137-5.433h6.078v-6.06L40 25.364l-3.094-5.363L40 14.64l-5.426-3.135V5.15h-6.08L25.359 0l-5.361 3.094z"
+                  />
+                  <path fill="#fff" d="M16.3 26.4 11.2 21.3l2.1-2.1 3 3 8.4-8.4 2.1 2.1z" />
+                </svg>
               </div>
               <p className="text-sm text-slate-500">Business Account</p>
             </div>

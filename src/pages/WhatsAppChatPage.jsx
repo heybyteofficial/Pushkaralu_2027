@@ -40,7 +40,8 @@ const ADMIN = {
   relationTe: mainContact.relationTe,
   phone: "9959401213",
 };
-const TYPING_DELAY_MS = 1400;
+const TYPING_DELAY_MS = 500;
+const REPLY_PAUSE_MS = 500;
 
 const EMOJI_GROUPS = [
   {
@@ -123,6 +124,18 @@ function readAudioDuration(url) {
     };
     audio.onerror = () => resolve(0);
   });
+}
+
+function MetaTick({ className = "h-4 w-4" }) {
+  return (
+    <svg viewBox="0 0 40 40" className={`${className} shrink-0 overflow-visible`} aria-label="Verified">
+      <path
+        fill="#0095F6"
+        d="M19.998 3.094 14.638 0l-2.972 5.15H5.432v6.354L0 14.64 3.094 20 0 25.359l5.432 3.137v5.905h5.975L14.638 40l5.36-3.094L25.359 40l3.137-5.433h6.078v-6.06L40 25.364l-3.094-5.363L40 14.64l-5.426-3.135V5.15h-6.08L25.359 0l-5.361 3.094z"
+      />
+      <path fill="#fff" d="M16.3 26.4 11.2 21.3l2.1-2.1 3 3 8.4-8.4 2.1 2.1z" />
+    </svg>
+  );
 }
 
 function ReadTicks() {
@@ -378,47 +391,14 @@ function pickFamilyMatch(seed) {
   return familyUsers[value % familyUsers.length];
 }
 
-function SearchCard({ onDone, searching = "Searching government records", done = "Search complete" }) {
-  const [progress, setProgress] = useState(6);
-  const doneRef = useRef(false);
-  const onDoneRef = useRef(onDone);
-  onDoneRef.current = onDone;
-
-  useEffect(() => {
-    const duration = 3000 + Math.random() * 2000;
-    const started = performance.now();
-    const timer = setInterval(() => {
-      const next = Math.min(100, Math.round(((performance.now() - started) / duration) * 100));
-      setProgress(next);
-      if (next >= 100) clearInterval(timer);
-    }, 50);
-    return () => clearInterval(timer);
-  }, []);
-
-  useEffect(() => {
-    if (progress < 100 || doneRef.current) return undefined;
-    doneRef.current = true;
-    const timer = setTimeout(() => onDoneRef.current(), 450);
-    return () => clearTimeout(timer);
-  }, [progress]);
-
-  return (
-    <div className="w-[230px] py-1">
-      <div className="flex items-center gap-2">
-        <img src={apLogo} alt="Andhra Pradesh Government" className="h-11 w-11 shrink-0 object-contain" />
-        <div className="min-w-0">
-          <p className="text-[14px] font-medium text-slate-900">{progress < 100 ? searching : done}</p>
-        </div>
-      </div>
-      <div className="mt-2 h-2 overflow-hidden rounded-full bg-slate-200" aria-hidden="true">
-        <div className="h-full rounded-full bg-[#008069] transition-[width] duration-75" style={{ width: `${progress}%` }} />
-      </div>
-      <p className="mt-1 text-right text-[12px] text-[#667781]">{progress}%</p>
-    </div>
-  );
-}
-
 function MessageBubble({ message, highlight = "", onAction }) {
+  if (message.kind === "note") {
+    return (
+      <p className="mx-auto w-fit max-w-[90%] rounded-lg bg-white/80 px-3 py-1 text-center text-[12.5px] text-[#667781] shadow-sm">
+        {message.text}
+      </p>
+    );
+  }
   if (message.kind === "system") {
     return (
       <p className="mx-4 rounded-lg bg-[#fff4cc] px-3 py-2 text-center text-[12.5px] leading-snug text-[#54656f] shadow-sm">
@@ -441,39 +421,34 @@ function MessageBubble({ message, highlight = "", onAction }) {
             message.kind === "image" ? "p-1" : message.kind === "audio" ? "py-2 pl-1.5 pr-2" : "px-3 pb-1.5 pt-1.5"
           }`}
         >
-          {message.kind === "search" ? (
-            <SearchCard searching={message.searching} done={message.done} onDone={() => onAction("search-done")} />
-          ) : (
-            <MessageBody message={message} highlight={highlight} />
-          )}
-          {!isText && message.kind !== "audio" && message.kind !== "search" && (
+          <MessageBody message={message} highlight={highlight} />
+          {!isText && message.kind !== "audio" && (
             <div className="flex justify-end px-1 pt-0.5">
               <TimeMark time={message.time} isUser={isUser} />
             </div>
           )}
           {message.hold && <SosHold onSent={() => onAction("sos")} />}
-          {message.buttons?.map((button) =>
-            button.phone ? (
-              <a
-                key={button.id}
-                href={`tel:${button.phone}`}
-                className="-mx-3 mt-1.5 block w-[calc(100%+1.5rem)] border-t border-black/10 px-3 py-2 text-center text-[14px] font-medium text-[#008069]"
-              >
-                {button.label}
+          {message.buttons?.map((button) => {
+            const rowClass = `-mx-3 mt-1.5 flex w-[calc(100%+1.5rem)] items-center justify-center gap-2 border-t border-black/10 px-3 py-2 text-[15px] font-medium ${
+              button.id === "no" ? "text-red-600" : "text-[#008069]"
+            }`;
+            const arrow = (
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" className="h-4 w-4 shrink-0" fill="currentColor" aria-hidden="true">
+                <path d="M6.598 5.013a.144.144 0 0 1 .202.134V6.3a.5.5 0 0 0 .5.5c.667 0 2.013.005 3.3.822.984.624 1.99 1.76 2.595 3.876-1.02-.983-2.185-1.516-3.205-1.799a8.7 8.7 0 0 0-1.921-.306 7 7 0 0 0-.798.008h-.013l-.005.001h-.001L7.3 9.9l-.05-.498a.5.5 0 0 0-.45.498v1.153c0 .108-.11.176-.202.134L2.614 8.254l-.042-.028a.147.147 0 0 1 0-.252l.042-.028zM7.8 10.386q.103 0 .223.006c.434.02 1.034.086 1.7.271 1.326.368 2.896 1.202 3.94 3.08a.5.5 0 0 0 .933-.305c-.464-3.71-1.886-5.662-3.46-6.66-1.245-.79-2.527-.942-3.336-.971v-.66a1.144 1.144 0 0 0-1.767-.96l-3.994 2.94a1.147 1.147 0 0 0 0 1.946l3.994 2.94a1.144 1.144 0 0 0 1.767-.96z" />
+              </svg>
+            );
+            return button.phone ? (
+              <a key={button.id} href={`tel:${button.phone}`} className={rowClass}>
+                {arrow}
+                <span>{button.label}</span>
               </a>
             ) : (
-              <button
-                key={button.id}
-                type="button"
-                onClick={() => onAction(button.id)}
-                className={`-mx-3 mt-1.5 block w-[calc(100%+1.5rem)] border-t border-black/10 px-3 py-2 text-center text-[14px] font-medium ${
-                  button.id === "no" ? "text-red-600" : "text-[#008069]"
-                }`}
-              >
-                {button.label}
+              <button key={button.id} type="button" onClick={() => onAction(button.id)} className={rowClass}>
+                {arrow}
+                <span>{button.label}</span>
               </button>
-            )
-          )}
+            );
+          })}
         </div>
         {isUser && <BubbleTail side="user" />}
       </div>
@@ -697,6 +672,7 @@ function WhatsAppChatPage({ onBack, onNavigate }) {
   const cameraStreamRef = useRef(null);
   const recordActionRef = useRef("cancel");
   const replyTimerRef = useRef(null);
+  const searchTimerRef = useRef(null);
   const recordSecondsRef = useRef(0);
   const canSend = draft.trim().length > 0;
   const searchMatches = useMemo(() => {
@@ -731,31 +707,33 @@ function WhatsAppChatPage({ onBack, onNavigate }) {
   const queueReplies = (guides) => {
     const pending = guides.filter((guide) => guide.reply);
     if (!pending.length) return;
-    setIsTyping(true);
     clearTimeout(replyTimerRef.current);
     let index = 0;
     const step = () => {
-      const guide = pending[index];
-      setMessages((current) => [
-        ...current,
-        {
-          id: `a-${Date.now()}-${index}`,
-          from: "assistant",
-          kind: "text",
-          text: guide.reply,
-          time: formatTime(new Date()),
-          hold: Boolean(guide.hold),
-          buttons: guide.buttons || null,
-        },
-      ]);
-      index += 1;
-      if (index < pending.length) {
-        replyTimerRef.current = setTimeout(step, 700);
-        return;
-      }
-      setIsTyping(false);
+      setIsTyping(true);
+      replyTimerRef.current = setTimeout(() => {
+        const guide = pending[index];
+        setMessages((current) => [
+          ...current,
+          {
+            id: `a-${Date.now()}-${index}`,
+            from: "assistant",
+            kind: "text",
+            text: guide.reply,
+            time: formatTime(new Date()),
+            hold: Boolean(guide.hold),
+            buttons: guide.buttons || null,
+          },
+        ]);
+        index += 1;
+        if (index < pending.length) {
+          step();
+          return;
+        }
+        setIsTyping(false);
+      }, REPLY_PAUSE_MS);
     };
-    replyTimerRef.current = setTimeout(step, 700);
+    step();
   };
 
   const L = (en, te) => (langRef.current === "te" ? te : en);
@@ -806,9 +784,6 @@ function WhatsAppChatPage({ onBack, onNavigate }) {
       ? `పేరు: ${person.nameTe}\nసంబంధం: ${person.relationTe}\n${ADMIN.phone}`
       : `Name: ${person.name}\nRelation: ${person.relation}\n${ADMIN.phone}`;
     queueReplies([
-      ...(again
-        ? []
-        : [{ reply: L("Match found in the government records.", "ప్రభుత్వ రికార్డుల్లో మ్యాచ్ దొరికింది.") }]),
       {
         reply: again
           ? L(`Please call the admin again.\n${details}`, `దయచేసి అడ్మిన్‌కు మళ్లీ కాల్ చేయండి.\n${details}`)
@@ -862,6 +837,7 @@ function WhatsAppChatPage({ onBack, onNavigate }) {
     return () => {
       clearTimeout(timer);
       clearTimeout(replyTimerRef.current);
+      clearTimeout(searchTimerRef.current);
     };
   }, []);
 
@@ -1010,12 +986,22 @@ function WhatsAppChatPage({ onBack, onNavigate }) {
     const match = pickFamilyMatch(`${file.name}-${file.size}`);
     matchRef.current = match;
     setMissingReport({ photo: true, waiting: "search", match });
+    const noteId = `search-${Date.now()}`;
     pushMessage({
-      from: "assistant",
-      kind: "search",
-      searching: L("Searching government records", "ప్రభుత్వ రికార్డులు వెతుకుతున్నాం"),
-      done: L("Search complete", "వెతకడం పూర్తి"),
+      id: noteId,
+      from: "system",
+      kind: "note",
+      text: L("Searching…", "వెతుకుతున్నాం…"),
     });
+    clearTimeout(searchTimerRef.current);
+    searchTimerRef.current = setTimeout(() => {
+      setMessages((current) =>
+        current.map((message) =>
+          message.id === noteId ? { ...message, text: L("Match found", "మ్యాచ్ దొరికింది") } : message
+        )
+      );
+      searchTimerRef.current = setTimeout(() => showAdminCall(false), REPLY_PAUSE_MS);
+    }, 1200);
   };
 
   const sendDocument = (file) => {
@@ -1142,11 +1128,7 @@ function WhatsAppChatPage({ onBack, onNavigate }) {
       replyWith(guide);
       return;
     }
-    if (action === "search-done") {
-      if (missingReport?.waiting !== "search") return;
-      showAdminCall(false);
-      return;
-    }
+    if (action === "search-done") return;
     if (action.startsWith("type-")) {
       const type = EMERGENCY_TYPES.find((item) => item.id === action.slice(5));
       if (!type) return;
@@ -1352,18 +1334,7 @@ function WhatsAppChatPage({ onBack, onNavigate }) {
           <span className="min-w-0">
             <span className="flex items-center gap-1">
               <span className="truncate text-[16px] font-medium leading-tight">Pushkar AI</span>
-              <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-[#25d366]">
-                <svg viewBox="0 0 16 16" className="h-3 w-3 overflow-visible" aria-hidden="true">
-                  <path
-                    d="M4.2 8.3 6.7 10.8 11.8 5.4"
-                    fill="none"
-                    stroke="#fff"
-                    strokeWidth="1.8"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-              </span>
+              <MetaTick className="h-[15px] w-[15px]" />
             </span>
             <span className="flex items-center gap-1 text-[12px] leading-tight text-white/85">
               {isTyping ? "typing..." : notificationsOn ? "online" : "muted"}
