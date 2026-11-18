@@ -76,7 +76,12 @@ function App() {
   }
 
   if (currentScreen === "whatsapp") {
-    return <WhatsAppChatPage onBack={() => setCurrentScreen("home")} />;
+    return (
+      <WhatsAppChatPage
+        onBack={() => setCurrentScreen("home")}
+        onNavigate={setCurrentScreen}
+      />
+    );
   }
 
   return <Home onNavigate={setCurrentScreen} />;

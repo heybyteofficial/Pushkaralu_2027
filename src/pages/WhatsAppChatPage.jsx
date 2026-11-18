@@ -17,10 +17,28 @@ import {
   Trash2,
   X,
 } from "lucide-react";
+import apLogo from "@/assets/ap-govt-logo.png";
 import PushkarAvatar from "../components/PushkarAvatar";
 import WhatsAppProfile from "../components/WhatsAppProfile";
+import { FALLBACK_GUIDE, GUIDES, VOICE_GUIDE, matchGuide } from "../data/chatGuides";
+import { users as familyUsers } from "../data/family";
 
 const OPENING_TEXT = "Hello! 👋\nHow can I help you?";
+const mainContact = familyUsers[0];
+const EMERGENCY_TYPES = [
+  { id: "medical", label: "Medical", labelTe: "వైద్యం", team: "Ambulance team", teamTe: "అంబులెన్స్ బృందం", phone: "108" },
+  { id: "accident", label: "Accident", labelTe: "ప్రమాదం", team: "Rescue team", teamTe: "రెస్క్యూ బృందం", phone: "108" },
+  { id: "police", label: "Police", labelTe: "పోలీసు", team: "Police team", teamTe: "పోలీసు బృందం", phone: "100" },
+];
+const ADMIN = {
+  title: "Missing Person Main Admin",
+  titleTe: "మిస్సింగ్ వ్యక్తి ప్రధాన అడ్మిన్",
+  name: mainContact.name,
+  nameTe: mainContact.nameTe,
+  relation: mainContact.relation,
+  relationTe: mainContact.relationTe,
+  phone: "9959401213",
+};
 const TYPING_DELAY_MS = 1400;
 
 const EMOJI_GROUPS = [
@@ -82,6 +100,7 @@ function highlightText(text, query) {
 
 function searchableText(message) {
   if (message.kind === "image") return `Photo ${message.name || ""} ${message.text || ""}`;
+  if (message.kind === "location") return `Location ${message.latitude} ${message.longitude}`;
   if (message.kind === "audio") return `Voice message ${message.name || ""}`;
   if (message.kind === "file") return message.name || "";
   return message.text || "";
@@ -251,6 +270,18 @@ function VoiceNote({ url, duration, time, isUser, seed }) {
 }
 
 function MessageBody({ message, highlight }) {
+  if (message.kind === "location") {
+    return (
+      <a href={message.url} target="_blank" rel="noreferrer" className="block py-1 text-[15px] leading-snug text-slate-900">
+        <span className="block font-medium">Exact location</span>
+        <span className="block text-[13px] text-[#667781]">
+          {message.latitude}, {message.longitude}
+        </span>
+        <span className="mt-1 block text-[14px] font-medium text-[#008069]">Open in Maps</span>
+      </a>
+    );
+  }
+
   if (message.kind === "image") {
     return (
       <div>
@@ -300,7 +331,94 @@ function MessageBody({ message, highlight }) {
   });
 }
 
-function MessageBubble({ message, highlight = "" }) {
+function SosHold({ onSent }) {
+  const [holding, setHolding] = useState(false);
+  const [sent, setSent] = useState(false);
+  const timerRef = useRef(null);
+
+  useEffect(() => () => clearTimeout(timerRef.current), []);
+
+  const start = (event) => {
+    event.preventDefault();
+    if (sent) return;
+    clearTimeout(timerRef.current);
+    setHolding(true);
+    timerRef.current = setTimeout(() => {
+      setSent(true);
+      setHolding(false);
+      onSent();
+    }, 3000);
+  };
+
+  const stop = () => {
+    if (sent) return;
+    clearTimeout(timerRef.current);
+    setHolding(false);
+  };
+
+  return (
+    <button
+      type="button"
+      onPointerDown={start}
+      onPointerUp={stop}
+      onPointerLeave={stop}
+      onPointerCancel={stop}
+      className={`-mx-3 mt-1.5 block w-[calc(100%+1.5rem)] border-t border-black/10 px-3 py-2 text-center text-[14px] font-medium ${
+        sent ? "text-emerald-600" : "text-red-600"
+      }`}
+    >
+      {sent ? "SOS sent" : holding ? "Hold..." : "Hold for SOS"}
+    </button>
+  );
+}
+
+function pickFamilyMatch(seed) {
+  const value = String(seed).split("").reduce((total, char, index) => total + char.charCodeAt(0) * (index + 1), 0);
+  return familyUsers[value % familyUsers.length];
+}
+
+function SearchCard({ onDone }) {
+  const [progress, setProgress] = useState(6);
+  const doneRef = useRef(false);
+  const onDoneRef = useRef(onDone);
+  onDoneRef.current = onDone;
+
+  useEffect(() => {
+    const duration = 3000 + Math.random() * 2000;
+    const started = performance.now();
+    const timer = setInterval(() => {
+      const next = Math.min(100, Math.round(((performance.now() - started) / duration) * 100));
+      setProgress(next);
+      if (next >= 100) clearInterval(timer);
+    }, 50);
+    return () => clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
+    if (progress < 100 || doneRef.current) return undefined;
+    doneRef.current = true;
+    const timer = setTimeout(() => onDoneRef.current(), 450);
+    return () => clearTimeout(timer);
+  }, [progress]);
+
+  return (
+    <div className="w-[230px] py-1">
+      <div className="flex items-center gap-2">
+        <img src={apLogo} alt="Andhra Pradesh Government" className="h-11 w-11 shrink-0 object-contain" />
+        <div className="min-w-0">
+          <p className="text-[14px] font-medium text-slate-900">{progress < 100 ? "Searching records" : "Search complete"}</p>
+          <p className="text-[12px] text-[#667781]">{progress < 100 ? "ప్రభుత్వ రికార్డులు వెతుకుతున్నాం" : "వెతకడం పూర్తి"}</p>
+        </div>
+      </div>
+      <div className="mt-2 h-2 overflow-hidden rounded-full bg-slate-200" aria-hidden="true">
+        <div className="h-full rounded-full bg-[#008069] transition-[width] duration-75" style={{ width: `${progress}%` }} />
+      </div>
+      <p className="mt-1 text-right text-[12px] text-[#667781]">{progress}%</p>
+    </div>
+  );
+}
+
+function MessageBubble({ message, highlight = "", onAction }) {
   if (message.kind === "system") {
     return (
       <p className="mx-4 rounded-lg bg-[#fff4cc] px-3 py-2 text-center text-[12.5px] leading-snug text-[#54656f] shadow-sm">
@@ -323,11 +441,38 @@ function MessageBubble({ message, highlight = "" }) {
             message.kind === "image" ? "p-1" : message.kind === "audio" ? "py-2 pl-1.5 pr-2" : "px-3 pb-1.5 pt-1.5"
           }`}
         >
-          <MessageBody message={message} highlight={highlight} />
-          {!isText && message.kind !== "audio" && (
+          {message.kind === "search" ? (
+            <SearchCard onDone={() => onAction("search-done")} />
+          ) : (
+            <MessageBody message={message} highlight={highlight} />
+          )}
+          {!isText && message.kind !== "audio" && message.kind !== "search" && (
             <div className="flex justify-end px-1 pt-0.5">
               <TimeMark time={message.time} isUser={isUser} />
             </div>
+          )}
+          {message.hold && <SosHold onSent={() => onAction("sos")} />}
+          {message.buttons?.map((button) =>
+            button.phone ? (
+              <a
+                key={button.id}
+                href={`tel:${button.phone}`}
+                className="-mx-3 mt-1.5 block w-[calc(100%+1.5rem)] border-t border-black/10 px-3 py-2 text-center text-[14px] font-medium text-[#008069]"
+              >
+                {button.label}
+              </a>
+            ) : (
+              <button
+                key={button.id}
+                type="button"
+                onClick={() => onAction(button.id)}
+                className={`-mx-3 mt-1.5 block w-[calc(100%+1.5rem)] border-t border-black/10 px-3 py-2 text-center text-[14px] font-medium ${
+                  button.id === "no" ? "text-red-600" : "text-[#008069]"
+                }`}
+              >
+                {button.label}
+              </button>
+            )
           )}
         </div>
         {isUser && <BubbleTail side="user" />}
@@ -338,7 +483,7 @@ function MessageBubble({ message, highlight = "" }) {
 
 function TypingBubble() {
   return (
-    <div className="flex justify-start px-1" aria-label="typing">
+    <div className="flex shrink-0 justify-start px-1" aria-label="typing">
       <div className="flex items-start">
         <BubbleTail side="assistant" />
         <div className="-ml-px flex h-8 items-center gap-1 rounded-lg rounded-tl-none bg-white px-3 shadow-sm">
@@ -498,7 +643,7 @@ function CameraSheet({ stream, onClose, onSend }) {
   );
 }
 
-function WhatsAppChatPage({ onBack }) {
+function WhatsAppChatPage({ onBack, onNavigate }) {
   const [view, setView] = useState("chat");
   const [messages, setMessages] = useState([]);
   const [isTyping, setIsTyping] = useState(true);
@@ -509,6 +654,11 @@ function WhatsAppChatPage({ onBack }) {
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [matchIndex, setMatchIndex] = useState(0);
+  const [selectedGuides, setSelectedGuides] = useState([]);
+  const [missingReport, setMissingReport] = useState(null);
+  const matchRef = useRef(null);
+  const [emergencyCase, setEmergencyCase] = useState(null);
+  const [showChoices, setShowChoices] = useState(false);
   const [panel, setPanel] = useState(null);
   const [notice, setNotice] = useState("");
   const [isRecording, setIsRecording] = useState(false);
@@ -525,6 +675,7 @@ function WhatsAppChatPage({ onBack }) {
   const streamRef = useRef(null);
   const cameraStreamRef = useRef(null);
   const recordActionRef = useRef("cancel");
+  const replyTimerRef = useRef(null);
   const recordSecondsRef = useRef(0);
   const canSend = draft.trim().length > 0;
   const searchMatches = useMemo(() => {
@@ -556,6 +707,112 @@ function WhatsAppChatPage({ onBack }) {
     setNotice(text);
   };
 
+  const queueReplies = (guides) => {
+    const pending = guides.filter((guide) => guide.reply);
+    if (!pending.length) return;
+    setIsTyping(true);
+    clearTimeout(replyTimerRef.current);
+    let index = 0;
+    const step = () => {
+      const guide = pending[index];
+      setMessages((current) => [
+        ...current,
+        {
+          id: `a-${Date.now()}-${index}`,
+          from: "assistant",
+          kind: "text",
+          text: guide.reply,
+          time: formatTime(new Date()),
+          hold: Boolean(guide.hold),
+          buttons: guide.buttons || null,
+        },
+      ]);
+      index += 1;
+      if (index < pending.length) {
+        replyTimerRef.current = setTimeout(step, 700);
+        return;
+      }
+      setIsTyping(false);
+    };
+    replyTimerRef.current = setTimeout(step, 700);
+  };
+
+  const say = (text) => {
+    queueReplies([{ reply: text }]);
+  };
+
+  const replyWith = (guide) => {
+    setShowChoices(false);
+    if (guide.collect === "missing") {
+      setMissingReport({ photo: false, waiting: "photo" });
+    }
+    if (guide.id === "emergency") {
+      setEmergencyCase({ waiting: "type" });
+    }
+    queueReplies([guide]);
+  };
+
+  const showAdminCall = (again) => {
+    const person = matchRef.current || {
+      name: ADMIN.name,
+      nameTe: ADMIN.nameTe,
+      relation: ADMIN.relation,
+      relationTe: ADMIN.relationTe,
+    };
+    setShowChoices(false);
+    setMissingReport((current) => ({ ...(current || {}), photo: true, waiting: "location", match: person }));
+    const details = `Name: ${person.name}\nRelation: ${person.relation}\n${ADMIN.phone}\nపేరు: ${person.nameTe}\nసంబంధం: ${person.relationTe}`;
+    queueReplies([
+      ...(again
+        ? []
+        : [{ reply: "Match found.\nమ్యాచ్ దొరికింది." }]),
+      {
+        reply: again
+          ? `Call again.\n${details}\nమళ్లీ కాల్ చేయండి.`
+          : `${ADMIN.title}\n${details}`,
+        buttons: [{ id: "call", label: "Call", phone: ADMIN.phone }],
+      },
+      {
+        reply: "Send your exact location so the admin can come to you.\nఅడ్మిన్ మీ దగ్గరికి రావడానికి మీ స్థానం పంపండి.",
+        buttons: [{ id: "location", label: "Send location" }],
+      },
+    ]);
+  };
+
+  const completeMissing = () => {
+    finishHelp();
+  };
+
+  const finishHelp = () => {
+    setMissingReport((current) => (current ? { ...current, waiting: "done" } : current));
+    setEmergencyCase((current) => (current ? { ...current, waiting: "done" } : current));
+    setSelectedGuides([]);
+    setShowChoices(true);
+    say("Thank you. This chat is complete.\nHow may I help you?\nధన్యవాదాలు. మళ్లీ మిస్సింగ్ లేదా అత్యవసరం ఎంచుకోండి.");
+  };
+
+  const toggleGuide = (id) => {
+    setSelectedGuides((current) => (
+      current.includes(id) ? current.filter((item) => item !== id) : [...current, id]
+    ));
+  };
+
+  const askSelected = () => {
+    const chosen = GUIDES.filter((guide) => selectedGuides.includes(guide.id));
+    if (!chosen.length) return;
+    setShowChoices(false);
+    if (chosen.some((guide) => guide.collect === "missing")) {
+      setMissingReport({ photo: false, waiting: "photo" });
+    }
+    if (chosen.some((guide) => guide.id === "emergency")) {
+      setEmergencyCase({ waiting: "type" });
+    }
+    pushMessage({ kind: "text", text: chosen.map((guide) => guide.chip).join(", ") });
+    setSelectedGuides([]);
+    setPanel(null);
+    queueReplies(chosen);
+  };
+
   useEffect(() => {
     const timer = setTimeout(() => {
       setMessages((current) => {
@@ -570,16 +827,25 @@ function WhatsAppChatPage({ onBack }) {
           },
         ];
       });
+      setShowChoices(true);
       setIsTyping(false);
     }, TYPING_DELAY_MS);
 
-    return () => clearTimeout(timer);
+    return () => {
+      clearTimeout(timer);
+      clearTimeout(replyTimerRef.current);
+    };
   }, []);
 
   useEffect(() => {
     if (searchOpen) return;
+    const hasConversation = messages.some((message) => message.id !== "opening");
+    if (!hasConversation) {
+      document.getElementById("msg-opening")?.scrollIntoView({ block: "start" });
+      return;
+    }
     endRef.current?.scrollIntoView({ block: "end" });
-  }, [messages, isTyping, view, searchOpen]);
+  }, [messages, isTyping, view, searchOpen, showChoices]);
 
   useEffect(() => {
     setMatchIndex(0);
@@ -638,6 +904,45 @@ function WhatsAppChatPage({ onBack }) {
     pushMessage({ kind: "text", text });
     setDraft("");
     setPanel(null);
+    if (emergencyCase && emergencyCase.waiting !== "done") {
+      setShowChoices(false);
+      if (emergencyCase.waiting === "type") {
+        say("Tap Medical, Accident, or Police.\nవైద్యం, ప్రమాదం లేదా పోలీసు నొక్కండి.");
+        return;
+      }
+      if (emergencyCase.waiting === "details") {
+        const type = EMERGENCY_TYPES.find((item) => item.id === emergencyCase.typeId);
+        setEmergencyCase({ ...emergencyCase, waiting: "location", detail: text });
+        queueReplies([
+          {
+            reply: `Send your location so the ${type.team} can come for this ${type.label.toLowerCase()} emergency.\nఈ ${type.labelTe} అత్యవసరానికి మీ స్థానం పంపండి. ${type.teamTe} అక్కడికి వెళ్తారు.`,
+            buttons: [{ id: "location", label: "Send location" }],
+          },
+        ]);
+        return;
+      }
+      if (emergencyCase.waiting === "location") {
+        say("Send your location with the button above.\nపైన ఉన్న బటన్‌తో మీ స్థానం పంపండి.");
+        return;
+      }
+      say("Tap Yes if the team reached you, or No to call them.\nబృందం వస్తే Yes, లేకపోతే No నొక్కండి.");
+      return;
+    }
+    if (missingReport && missingReport.waiting !== "done") {
+      setShowChoices(false);
+      if (missingReport.waiting === "photo") {
+        say("Open the camera and send a photo of yourself.\nకెమెరా తెరిచి మీ ఫోటో పంపండి.");
+      } else if (missingReport.waiting === "search") {
+        say("The search is still running.\nవెతకడం ఇంకా జరుగుతోంది.");
+      } else if (missingReport.waiting === "location") {
+        say("Call the admin, then send your exact location.\nఅడ్మిన్‌కు కాల్ చేసి మీ స్థానం పంపండి.");
+      } else {
+        say("Tap Yes if the admin reached you, or No to call again.\nఅడ్మిన్ వచ్చి ఉంటే Yes, లేకపోతే No నొక్కండి.");
+      }
+      return;
+    }
+    const guide = matchGuide(text);
+    replyWith(guide || FALLBACK_GUIDE);
   };
 
   const insertEmoji = (emoji) => {
@@ -663,6 +968,11 @@ function WhatsAppChatPage({ onBack }) {
       url: rememberUrl(URL.createObjectURL(file)),
       name: file.name || "Photo",
     });
+    if (missingReport?.waiting !== "photo") return;
+    const match = pickFamilyMatch(`${file.name}-${file.size}`);
+    matchRef.current = match;
+    setMissingReport({ photo: true, waiting: "search", match });
+    pushMessage({ from: "assistant", kind: "search", text: "Searching records" });
   };
 
   const sendDocument = (file) => {
@@ -693,7 +1003,7 @@ function WhatsAppChatPage({ onBack }) {
     files.forEach((file) => sender(file));
   };
 
-  const openCamera = async () => {
+  const openCamera = async (facingMode = "environment") => {
     setPanel(null);
     if (!navigator.mediaDevices?.getUserMedia) {
       cameraFileRef.current?.click();
@@ -701,13 +1011,105 @@ function WhatsAppChatPage({ onBack }) {
     }
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: "environment" },
+        video: { facingMode },
         audio: false,
       });
       setCameraStream(stream);
     } catch {
       showNotice("Camera is blocked. Choose a photo instead.");
       cameraFileRef.current?.click();
+    }
+  };
+
+  const sendLocation = () => {
+    if (!navigator.geolocation) {
+      showNotice("Location is not available on this phone.");
+      return;
+    }
+    showNotice("Getting your location...");
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const latitude = position.coords.latitude.toFixed(5);
+        const longitude = position.coords.longitude.toFixed(5);
+        pushMessage({
+          kind: "location",
+          latitude,
+          longitude,
+          url: `https://maps.google.com/?q=${latitude},${longitude}`,
+          text: "Exact location",
+        });
+        setNotice("");
+        setShowChoices(false);
+        const type = EMERGENCY_TYPES.find((item) => item.id === emergencyCase?.typeId);
+        if (emergencyCase?.waiting === "location" && type) {
+          setEmergencyCase((current) => ({ ...current, waiting: "reached" }));
+          queueReplies([
+            {
+              reply: `${type.team} is about 2 minutes away for this ${type.label.toLowerCase()} emergency.\nHas the team reached you?\n${type.teamTe} ఈ ${type.labelTe} అత్యవసరానికి సుమారు 2 నిమిషాల్లో వస్తుంది.\nబృందం మీ దగ్గరికి వచ్చిందా?`,
+              buttons: [
+                { id: "yes", label: "Yes" },
+                { id: "no", label: "No" },
+              ],
+            },
+          ]);
+          return;
+        }
+        setMissingReport((current) => ({ ...(current || {}), waiting: "reached" }));
+        queueReplies([
+          {
+            reply: "The admin can see your location and is coming to you.\nHas the admin reached you?\nఅడ్మిన్ మీ దగ్గరికి వచ్చారా?",
+            buttons: [
+              { id: "yes", label: "Yes" },
+              { id: "no", label: "No" },
+            ],
+          },
+        ]);
+      },
+      () => showNotice("Allow location so the admin can reach you."),
+      { enableHighAccuracy: true, timeout: 12000 }
+    );
+  };
+
+  const handleBubbleAction = (action) => {
+    if (action === "search-done") {
+      if (missingReport?.waiting !== "search") return;
+      showAdminCall(false);
+      return;
+    }
+    if (action.startsWith("type-")) {
+      const type = EMERGENCY_TYPES.find((item) => item.id === action.slice(5));
+      if (!type) return;
+      setShowChoices(false);
+      setEmergencyCase({ waiting: "details", typeId: type.id });
+      say(`You chose ${type.label}. Explain what happened.\nమీరు ${type.labelTe} ఎంచుకున్నారు. ఏమైందో చెప్పండి.`);
+      return;
+    }
+    if (action === "camera") {
+      openCamera("user");
+      return;
+    }
+    if (action === "location") {
+      sendLocation();
+      return;
+    }
+    if (action === "yes") {
+      if (emergencyCase?.waiting === "reached" || missingReport?.waiting === "reached") finishHelp();
+      return;
+    }
+    if (action === "no") {
+      if (emergencyCase?.waiting === "reached") {
+        const type = EMERGENCY_TYPES.find((item) => item.id === emergencyCase.typeId);
+        setShowChoices(false);
+        queueReplies([
+          {
+            reply: `Call the ${type.team}.\n${type.phone}\n${type.teamTe} వారికి కాల్ చేయండి.`,
+            buttons: [{ id: "call", label: "Call", phone: type.phone }],
+          },
+        ]);
+        return;
+      }
+      if (missingReport?.waiting !== "reached") return;
+      showAdminCall(true);
     }
   };
 
@@ -757,6 +1159,7 @@ function WhatsAppChatPage({ onBack }) {
           name: "Voice message",
           duration: recordSecondsRef.current,
         });
+        replyWith(VOICE_GUIDE);
       };
       recorderRef.current = recorder;
       recordActionRef.current = "cancel";
@@ -813,7 +1216,7 @@ function WhatsAppChatPage({ onBack }) {
   const roundLabel = isRecording || canSend ? "Send" : "Voice message";
 
   return (
-    <div className="relative mx-auto flex min-h-screen w-full max-w-sm flex-col bg-[#efeae2] shadow-2xl">
+    <div className="relative mx-auto flex h-dvh max-h-dvh w-full max-w-sm flex-col bg-[#efeae2] shadow-2xl">
       <header className="flex items-center gap-1 bg-[#008069] px-1 py-1.5 text-white">
         {searchOpen ? (
           <>
@@ -898,7 +1301,7 @@ function WhatsAppChatPage({ onBack }) {
       </header>
 
       <div
-        className="wa-wall flex flex-1 flex-col gap-2 overflow-y-auto px-3 py-3"
+        className="wa-wall flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto px-3 py-3"
         onClick={() => setPanel(null)}
       >
         <p className="mx-auto mb-1 rounded-lg bg-white/80 px-3 py-1 text-[12px] text-slate-500 shadow-sm">
@@ -908,12 +1311,46 @@ function WhatsAppChatPage({ onBack }) {
           <div
             id={`msg-${message.id}`}
             key={message.id}
-            className={searchMatches[matchIndex]?.id === message.id && searchQuery.trim() ? "rounded-md bg-black/5" : ""}
+            className={`shrink-0 ${searchMatches[matchIndex]?.id === message.id && searchQuery.trim() ? "rounded-md bg-black/5" : ""}`}
           >
-            <MessageBubble message={message} highlight={searchQuery} />
+            <MessageBubble message={message} highlight={searchQuery} onAction={handleBubbleAction} />
           </div>
         ))}
         {isTyping && <TypingBubble />}
+        {showChoices && messages.some((message) => message.id === "opening") && !isTyping && (
+          <div
+            className="ml-3 max-w-[82%] shrink-0 overflow-hidden rounded-lg bg-white shadow-sm"
+            onClick={(event) => event.stopPropagation()}
+          >
+            {GUIDES.map((guide, index) => {
+              const checked = selectedGuides.includes(guide.id);
+              return (
+                <label
+                  key={guide.id}
+                  className={`flex cursor-pointer items-center gap-3 px-3 py-2.5 text-[14px] ${
+                    index > 0 ? "border-t border-black/10" : ""
+                  } ${guide.id === "emergency" ? "text-red-600" : "text-slate-800"}`}
+                >
+                  <input
+                    type="checkbox"
+                    checked={checked}
+                    onChange={() => toggleGuide(guide.id)}
+                    className="h-4 w-4 shrink-0 accent-[#008069]"
+                  />
+                  {guide.chip}
+                </label>
+              );
+            })}
+            <button
+              type="button"
+              onClick={askSelected}
+              disabled={selectedGuides.length === 0}
+              className="w-full border-t border-black/10 py-2.5 text-center text-[14px] font-medium text-[#008069] disabled:text-slate-300"
+            >
+              Send
+            </button>
+          </div>
+        )}
         <div ref={endRef} />
       </div>
 
