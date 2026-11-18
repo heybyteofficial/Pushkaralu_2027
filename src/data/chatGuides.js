@@ -2,36 +2,48 @@ const GUIDES = [
   {
     id: "missing",
     chip: "Missing person",
+    chipTe: "మిస్సింగ్ వ్యక్తి",
     keywords: ["missing", "lost", "child", "తప్పిపో"],
     collect: "missing",
-    reply:
-      "Take a photo of yourself so the admin can find you.\nమిమ్మల్ని కనుగొనేందుకు మీ ఫోటో తీయండి.",
-    buttons: [{ id: "camera", label: "Open camera" }],
+    reply: {
+      en: "Please send a photo of yourself so the missing-person admin can find you.",
+      te: "మిస్సింగ్ వ్యక్తి అడ్మిన్ మిమ్మల్ని కనుగొనేందుకు మీ ఫోటో పంపండి.",
+    },
+    buttons: [{ id: "camera", label: "Open camera", labelTe: "కెమెరా తెరవండి" }],
   },
   {
     id: "emergency",
     chip: "Emergency",
+    chipTe: "అత్యవసరం",
     keywords: ["emergency", "sos", "ambulance", "police", "accident", "అత్యవసర"],
-    reply:
-      "What is the emergency?\nఅత్యవసరం ఏమిటి?",
+    reply: {
+      en: "Please select the type of emergency.",
+      te: "అత్యవసరం రకాన్ని ఎంచుకోండి.",
+    },
     buttons: [
-      { id: "type-medical", label: "Medical" },
-      { id: "type-accident", label: "Accident" },
-      { id: "type-police", label: "Police" },
+      { id: "type-medical", label: "Medical", labelTe: "వైద్యం" },
+      { id: "type-accident", label: "Accident", labelTe: "ప్రమాదం" },
+      { id: "type-police", label: "Police", labelTe: "పోలీసు" },
     ],
   },
 ];
 
 const VOICE_GUIDE = {
   id: "voice",
-  reply:
-    "I got your voice note. Select Missing person or Emergency below.\nమీ వాయిస్ నోట్ వచ్చింది. కింద మిస్సింగ్ లేదా అత్యవసరం ఎంచుకోండి.",
+  reply: {
+    en: "Your voice note is received. Please choose a service.",
+    te: "మీ వాయిస్ నోట్ అందింది. దయచేసి ఒక సేవను ఎంచుకోండి.",
+  },
+  buttons: [{ id: "choose-service", label: "Choose Service", labelTe: "సేవను ఎంచుకోండి" }],
 };
 
 const FALLBACK_GUIDE = {
   id: "menu",
-  reply:
-    "I can help with a missing person or an emergency. Select one below.\nతప్పిపోయిన వ్యక్తి లేదా అత్యవసర సహాయం కోసం కింద ఎంచుకోండి.",
+  reply: {
+    en: "Please choose a service, or type TE for Telugu and EN for English.",
+    te: "దయచేసి ఒక సేవను ఎంచుకోండి. తెలుగు కోసం TE, ఇంగ్లీష్ కోసం EN అని పంపండి.",
+  },
+  buttons: [{ id: "choose-service", label: "Choose Service", labelTe: "సేవను ఎంచుకోండి" }],
 };
 
 function matchGuide(text) {

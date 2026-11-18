@@ -9,6 +9,7 @@ import {
   Headphones,
   Image as ImageIcon,
   Keyboard,
+  Lock,
   Mic,
   MoreVertical,
   Paperclip,
@@ -23,7 +24,7 @@ import WhatsAppProfile from "../components/WhatsAppProfile";
 import { FALLBACK_GUIDE, GUIDES, VOICE_GUIDE, matchGuide } from "../data/chatGuides";
 import { users as familyUsers } from "../data/family";
 
-const OPENING_TEXT = "Hello! 👋\nHow can I help you?";
+const OPENING_TEXT = "Welcome to the Government of Andhra Pradesh citizen assistance service for Pushkaralu 2027.\n\nFor information in Telugu, type TE.\nFor information in English, type EN.";
 const mainContact = familyUsers[0];
 const EMERGENCY_TYPES = [
   { id: "medical", label: "Medical", labelTe: "వైద్యం", team: "Ambulance team", teamTe: "అంబులెన్స్ బృందం", phone: "108" },
@@ -377,7 +378,7 @@ function pickFamilyMatch(seed) {
   return familyUsers[value % familyUsers.length];
 }
 
-function SearchCard({ onDone }) {
+function SearchCard({ onDone, searching = "Searching government records", done = "Search complete" }) {
   const [progress, setProgress] = useState(6);
   const doneRef = useRef(false);
   const onDoneRef = useRef(onDone);
@@ -406,8 +407,7 @@ function SearchCard({ onDone }) {
       <div className="flex items-center gap-2">
         <img src={apLogo} alt="Andhra Pradesh Government" className="h-11 w-11 shrink-0 object-contain" />
         <div className="min-w-0">
-          <p className="text-[14px] font-medium text-slate-900">{progress < 100 ? "Searching records" : "Search complete"}</p>
-          <p className="text-[12px] text-[#667781]">{progress < 100 ? "ప్రభుత్వ రికార్డులు వెతుకుతున్నాం" : "వెతకడం పూర్తి"}</p>
+          <p className="text-[14px] font-medium text-slate-900">{progress < 100 ? searching : done}</p>
         </div>
       </div>
       <div className="mt-2 h-2 overflow-hidden rounded-full bg-slate-200" aria-hidden="true">
@@ -442,7 +442,7 @@ function MessageBubble({ message, highlight = "", onAction }) {
           }`}
         >
           {message.kind === "search" ? (
-            <SearchCard onDone={() => onAction("search-done")} />
+            <SearchCard searching={message.searching} done={message.done} onDone={() => onAction("search-done")} />
           ) : (
             <MessageBody message={message} highlight={highlight} />
           )}
@@ -477,6 +477,25 @@ function MessageBubble({ message, highlight = "", onAction }) {
         </div>
         {isUser && <BubbleTail side="user" />}
       </div>
+    </div>
+  );
+}
+
+function EncryptionNotice() {
+  return (
+    <p className="mx-auto mb-1 max-w-[92%] shrink-0 rounded-lg bg-[#fff4cc] px-3 py-1.5 text-center text-[12.5px] leading-snug text-[#54656f] shadow-[0_1px_0.5px_rgba(11,20,26,0.13)]">
+      <Lock className="mr-1 inline h-3 w-3 align-[-2px]" aria-hidden="true" />
+      Messages and calls are end-to-end encrypted. Only people in this chat can read, listen to, or share them. Learn more.
+    </p>
+  );
+}
+
+function OpeningSeal() {
+  return (
+    <div className="flex shrink-0 justify-center py-1" aria-label="Andhra Pradesh Government">
+      <span className="wa-gov-seal inline-flex">
+        <img src={apLogo} alt="" className="h-24 w-24 object-contain" />
+      </span>
     </div>
   );
 }
@@ -654,17 +673,19 @@ function WhatsAppChatPage({ onBack, onNavigate }) {
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [matchIndex, setMatchIndex] = useState(0);
-  const [selectedGuides, setSelectedGuides] = useState([]);
   const [missingReport, setMissingReport] = useState(null);
   const matchRef = useRef(null);
   const [emergencyCase, setEmergencyCase] = useState(null);
-  const [showChoices, setShowChoices] = useState(false);
+  const [lang, setLang] = useState("en");
+  const langRef = useRef("en");
+  langRef.current = lang;
   const [panel, setPanel] = useState(null);
   const [notice, setNotice] = useState("");
   const [isRecording, setIsRecording] = useState(false);
   const [recordSeconds, setRecordSeconds] = useState(0);
   const [cameraStream, setCameraStream] = useState(null);
   const endRef = useRef(null);
+  const wallRef = useRef(null);
   const inputRef = useRef(null);
   const urlsRef = useRef([]);
   const galleryRef = useRef(null);
@@ -737,19 +758,39 @@ function WhatsAppChatPage({ onBack, onNavigate }) {
     replyTimerRef.current = setTimeout(step, 700);
   };
 
+  const L = (en, te) => (langRef.current === "te" ? te : en);
+
+  const pack = (guide) => ({
+    reply: guide.reply?.[langRef.current] || guide.reply?.en || guide.reply,
+    hold: guide.hold,
+    buttons: (guide.buttons || []).map((button) => ({
+      ...button,
+      label: langRef.current === "te" && button.labelTe ? button.labelTe : button.label,
+    })),
+  });
+
   const say = (text) => {
     queueReplies([{ reply: text }]);
   };
 
+  const chooseServiceButton = () => ({
+    id: "choose-service",
+    label: L("Choose Service", "సేవను ఎంచుకోండి"),
+  });
+
+  const serviceBusy = () => (
+    (missingReport && missingReport.waiting !== "done")
+    || (emergencyCase && emergencyCase.waiting !== "done")
+  );
+
   const replyWith = (guide) => {
-    setShowChoices(false);
     if (guide.collect === "missing") {
       setMissingReport({ photo: false, waiting: "photo" });
     }
     if (guide.id === "emergency") {
       setEmergencyCase({ waiting: "type" });
     }
-    queueReplies([guide]);
+    queueReplies([pack(guide)]);
   };
 
   const showAdminCall = (again) => {
@@ -759,22 +800,27 @@ function WhatsAppChatPage({ onBack, onNavigate }) {
       relation: ADMIN.relation,
       relationTe: ADMIN.relationTe,
     };
-    setShowChoices(false);
     setMissingReport((current) => ({ ...(current || {}), photo: true, waiting: "location", match: person }));
-    const details = `Name: ${person.name}\nRelation: ${person.relation}\n${ADMIN.phone}\nపేరు: ${person.nameTe}\nసంబంధం: ${person.relationTe}`;
+    const te = langRef.current === "te";
+    const details = te
+      ? `పేరు: ${person.nameTe}\nసంబంధం: ${person.relationTe}\n${ADMIN.phone}`
+      : `Name: ${person.name}\nRelation: ${person.relation}\n${ADMIN.phone}`;
     queueReplies([
       ...(again
         ? []
-        : [{ reply: "Match found.\nమ్యాచ్ దొరికింది." }]),
+        : [{ reply: L("Match found in the government records.", "ప్రభుత్వ రికార్డుల్లో మ్యాచ్ దొరికింది.") }]),
       {
         reply: again
-          ? `Call again.\n${details}\nమళ్లీ కాల్ చేయండి.`
-          : `${ADMIN.title}\n${details}`,
-        buttons: [{ id: "call", label: "Call", phone: ADMIN.phone }],
+          ? L(`Please call the admin again.\n${details}`, `దయచేసి అడ్మిన్‌కు మళ్లీ కాల్ చేయండి.\n${details}`)
+          : `${te ? ADMIN.titleTe : ADMIN.title}\n${details}`,
+        buttons: [{ id: "call", label: L("Call", "కాల్"), phone: ADMIN.phone }],
       },
       {
-        reply: "Send your exact location so the admin can come to you.\nఅడ్మిన్ మీ దగ్గరికి రావడానికి మీ స్థానం పంపండి.",
-        buttons: [{ id: "location", label: "Send location" }],
+        reply: L(
+          "Please share your location so the admin can reach you.",
+          "అడ్మిన్ మీ దగ్గరికి రావడానికి మీ స్థానం పంపండి."
+        ),
+        buttons: [{ id: "location", label: L("Send location", "స్థానం పంపండి") }],
       },
     ]);
   };
@@ -786,31 +832,13 @@ function WhatsAppChatPage({ onBack, onNavigate }) {
   const finishHelp = () => {
     setMissingReport((current) => (current ? { ...current, waiting: "done" } : current));
     setEmergencyCase((current) => (current ? { ...current, waiting: "done" } : current));
-    setSelectedGuides([]);
-    setShowChoices(true);
-    say("Thank you. This chat is complete.\nHow may I help you?\nధన్యవాదాలు. మళ్లీ మిస్సింగ్ లేదా అత్యవసరం ఎంచుకోండి.");
-  };
-
-  const toggleGuide = (id) => {
-    setSelectedGuides((current) => (
-      current.includes(id) ? current.filter((item) => item !== id) : [...current, id]
-    ));
-  };
-
-  const askSelected = () => {
-    const chosen = GUIDES.filter((guide) => selectedGuides.includes(guide.id));
-    if (!chosen.length) return;
-    setShowChoices(false);
-    if (chosen.some((guide) => guide.collect === "missing")) {
-      setMissingReport({ photo: false, waiting: "photo" });
-    }
-    if (chosen.some((guide) => guide.id === "emergency")) {
-      setEmergencyCase({ waiting: "type" });
-    }
-    pushMessage({ kind: "text", text: chosen.map((guide) => guide.chip).join(", ") });
-    setSelectedGuides([]);
-    setPanel(null);
-    queueReplies(chosen);
+    queueReplies([
+      { reply: L("Thank you. This service is complete.", "ధన్యవాదాలు. ఈ సేవ పూర్తయింది.") },
+      {
+        reply: L("Please choose a service.", "దయచేసి ఒక సేవను ఎంచుకోండి."),
+        buttons: [chooseServiceButton()],
+      },
+    ]);
   };
 
   useEffect(() => {
@@ -824,10 +852,10 @@ function WhatsAppChatPage({ onBack, onNavigate }) {
             from: "assistant",
             text: OPENING_TEXT,
             time: formatTime(new Date()),
+            buttons: [{ id: "choose-service", label: "Choose Service" }],
           },
         ];
       });
-      setShowChoices(true);
       setIsTyping(false);
     }, TYPING_DELAY_MS);
 
@@ -841,11 +869,11 @@ function WhatsAppChatPage({ onBack, onNavigate }) {
     if (searchOpen) return;
     const hasConversation = messages.some((message) => message.id !== "opening");
     if (!hasConversation) {
-      document.getElementById("msg-opening")?.scrollIntoView({ block: "start" });
+      if (wallRef.current) wallRef.current.scrollTop = 0;
       return;
     }
     endRef.current?.scrollIntoView({ block: "end" });
-  }, [messages, isTyping, view, searchOpen, showChoices]);
+  }, [messages, isTyping, view, searchOpen]);
 
   useEffect(() => {
     setMatchIndex(0);
@@ -904,40 +932,50 @@ function WhatsAppChatPage({ onBack, onNavigate }) {
     pushMessage({ kind: "text", text });
     setDraft("");
     setPanel(null);
+    const code = text.toUpperCase();
+    if (code === "TE" || code === "EN") {
+      const next = code === "TE" ? "te" : "en";
+      langRef.current = next;
+      setLang(next);
+      queueReplies([{
+        reply: next === "te"
+          ? "తెలుగు ఎంపిక చేయబడింది. తర్వాతి సందేశాలు తెలుగులో ఉంటాయి."
+          : "English selected. Further messages will be in English.",
+        buttons: serviceBusy() ? null : [chooseServiceButton()],
+      }]);
+      return;
+    }
+    if (!serviceBusy() && /^(hi|hello|hey|హాయ్|నమస్తే)$/i.test(text)) {
+      queueReplies([{
+        reply: L(
+          "Welcome to the Government of Andhra Pradesh citizen assistance service for Pushkaralu 2027.",
+          "పుష్కరాలు 2027 కోసం ఆంధ్రప్రదేశ్ ప్రభుత్వ పౌర సేవకు స్వాగతం."
+        ),
+        buttons: [chooseServiceButton()],
+      }]);
+      return;
+    }
     if (emergencyCase && emergencyCase.waiting !== "done") {
-      setShowChoices(false);
       if (emergencyCase.waiting === "type") {
-        say("Tap Medical, Accident, or Police.\nవైద్యం, ప్రమాదం లేదా పోలీసు నొక్కండి.");
-        return;
-      }
-      if (emergencyCase.waiting === "details") {
-        const type = EMERGENCY_TYPES.find((item) => item.id === emergencyCase.typeId);
-        setEmergencyCase({ ...emergencyCase, waiting: "location", detail: text });
-        queueReplies([
-          {
-            reply: `Send your location so the ${type.team} can come for this ${type.label.toLowerCase()} emergency.\nఈ ${type.labelTe} అత్యవసరానికి మీ స్థానం పంపండి. ${type.teamTe} అక్కడికి వెళ్తారు.`,
-            buttons: [{ id: "location", label: "Send location" }],
-          },
-        ]);
+        say(L("Please select Medical, Accident, or Police.", "దయచేసి వైద్యం, ప్రమాదం లేదా పోలీసు ఎంచుకోండి."));
         return;
       }
       if (emergencyCase.waiting === "location") {
-        say("Send your location with the button above.\nపైన ఉన్న బటన్‌తో మీ స్థానం పంపండి.");
+        say(L("Please send your location with the button above.", "పైన ఉన్న బటన్‌తో మీ స్థానం పంపండి."));
         return;
       }
-      say("Tap Yes if the team reached you, or No to call them.\nబృందం వస్తే Yes, లేకపోతే No నొక్కండి.");
+      say(L("Please tap Yes if the team reached you, or No to call them.", "బృందం వస్తే అవును, లేకపోతే కాదు నొక్కండి."));
       return;
     }
     if (missingReport && missingReport.waiting !== "done") {
-      setShowChoices(false);
       if (missingReport.waiting === "photo") {
-        say("Open the camera and send a photo of yourself.\nకెమెరా తెరిచి మీ ఫోటో పంపండి.");
+        say(L("Please open the camera and send your photo.", "దయచేసి కెమెరా తెరిచి మీ ఫోటో పంపండి."));
       } else if (missingReport.waiting === "search") {
-        say("The search is still running.\nవెతకడం ఇంకా జరుగుతోంది.");
+        say(L("Government records are still being searched.", "ప్రభుత్వ రికార్డులు ఇంకా వెతకబడుతున్నాయి."));
       } else if (missingReport.waiting === "location") {
-        say("Call the admin, then send your exact location.\nఅడ్మిన్‌కు కాల్ చేసి మీ స్థానం పంపండి.");
+        say(L("Please call the admin, then send your location.", "దయచేసి అడ్మిన్‌కు కాల్ చేసి మీ స్థానం పంపండి."));
       } else {
-        say("Tap Yes if the admin reached you, or No to call again.\nఅడ్మిన్ వచ్చి ఉంటే Yes, లేకపోతే No నొక్కండి.");
+        say(L("Please tap Yes if the admin reached you, or No to call again.", "అడ్మిన్ వచ్చి ఉంటే అవును, లేకపోతే కాదు నొక్కండి."));
       }
       return;
     }
@@ -972,7 +1010,12 @@ function WhatsAppChatPage({ onBack, onNavigate }) {
     const match = pickFamilyMatch(`${file.name}-${file.size}`);
     matchRef.current = match;
     setMissingReport({ photo: true, waiting: "search", match });
-    pushMessage({ from: "assistant", kind: "search", text: "Searching records" });
+    pushMessage({
+      from: "assistant",
+      kind: "search",
+      searching: L("Searching government records", "ప్రభుత్వ రికార్డులు వెతుకుతున్నాం"),
+      done: L("Search complete", "వెతకడం పూర్తి"),
+    });
   };
 
   const sendDocument = (file) => {
@@ -1039,17 +1082,21 @@ function WhatsAppChatPage({ onBack, onNavigate }) {
           text: "Exact location",
         });
         setNotice("");
-        setShowChoices(false);
         const type = EMERGENCY_TYPES.find((item) => item.id === emergencyCase?.typeId);
+        const yesNo = [
+          { id: "yes", label: L("Yes", "అవును") },
+          { id: "no", label: L("No", "కాదు") },
+        ];
         if (emergencyCase?.waiting === "location" && type) {
           setEmergencyCase((current) => ({ ...current, waiting: "reached" }));
+          const team = L(type.team, type.teamTe);
           queueReplies([
             {
-              reply: `${type.team} is about 2 minutes away for this ${type.label.toLowerCase()} emergency.\nHas the team reached you?\n${type.teamTe} ఈ ${type.labelTe} అత్యవసరానికి సుమారు 2 నిమిషాల్లో వస్తుంది.\nబృందం మీ దగ్గరికి వచ్చిందా?`,
-              buttons: [
-                { id: "yes", label: "Yes" },
-                { id: "no", label: "No" },
-              ],
+              reply: L(
+                `${team} is on the way.\nWill the team reach you?`,
+                `${team} దారిలో ఉంది.\nబృందం మీ దగ్గరికి వస్తుందా?`
+              ),
+              buttons: yesNo,
             },
           ]);
           return;
@@ -1057,20 +1104,44 @@ function WhatsAppChatPage({ onBack, onNavigate }) {
         setMissingReport((current) => ({ ...(current || {}), waiting: "reached" }));
         queueReplies([
           {
-            reply: "The admin can see your location and is coming to you.\nHas the admin reached you?\nఅడ్మిన్ మీ దగ్గరికి వచ్చారా?",
-            buttons: [
-              { id: "yes", label: "Yes" },
-              { id: "no", label: "No" },
-            ],
+            reply: L(
+              "The admin has your location and is on the way.\nHas the admin reached you?",
+              "అడ్మిన్ మీ స్థానం అందుకున్నారు. దారిలో ఉన్నారు.\nఅడ్మిన్ మీ దగ్గరికి వచ్చారా?"
+            ),
+            buttons: yesNo,
           },
         ]);
       },
-      () => showNotice("Allow location so the admin can reach you."),
+      () => showNotice(L("Allow location so the admin can reach you.", "అడ్మిన్ మీ దగ్గరికి రావడానికి లొకేషన్ అనుమతించండి.")),
       { enableHighAccuracy: true, timeout: 12000 }
     );
   };
 
   const handleBubbleAction = (action) => {
+    if (action === "choose-service") {
+      if (serviceBusy()) {
+        say(L("Please complete the current service first.", "దయచేసి ప్రస్తుత సేవను ముందు పూర్తి చేయండి."));
+        return;
+      }
+      queueReplies([{
+        reply: L("Please select one service.", "ఒక సేవను ఎంచుకోండి."),
+        buttons: [
+          { id: "service-missing", label: L("Missing person", "మిస్సింగ్ వ్యక్తి") },
+          { id: "service-emergency", label: L("Emergency", "అత్యవసరం") },
+        ],
+      }]);
+      return;
+    }
+    if (action === "service-missing" || action === "service-emergency") {
+      if (serviceBusy()) {
+        say(L("Please complete the current service first.", "దయచేసి ప్రస్తుత సేవను ముందు పూర్తి చేయండి."));
+        return;
+      }
+      const guide = GUIDES.find((item) => item.id === (action === "service-missing" ? "missing" : "emergency"));
+      pushMessage({ kind: "text", text: L(guide.chip, guide.chipTe) });
+      replyWith(guide);
+      return;
+    }
     if (action === "search-done") {
       if (missingReport?.waiting !== "search") return;
       showAdminCall(false);
@@ -1079,9 +1150,18 @@ function WhatsAppChatPage({ onBack, onNavigate }) {
     if (action.startsWith("type-")) {
       const type = EMERGENCY_TYPES.find((item) => item.id === action.slice(5));
       if (!type) return;
-      setShowChoices(false);
-      setEmergencyCase({ waiting: "details", typeId: type.id });
-      say(`You chose ${type.label}. Explain what happened.\nమీరు ${type.labelTe} ఎంచుకున్నారు. ఏమైందో చెప్పండి.`);
+      setEmergencyCase({ waiting: "location", typeId: type.id });
+      pushMessage({ kind: "text", text: L(type.label, type.labelTe) });
+      const team = L(type.team, type.teamTe);
+      queueReplies([
+        {
+          reply: L(
+            `Please share your location so the ${team} can be sent.`,
+            `${team} రావడానికి మీ స్థానం పంపండి.`
+          ),
+          buttons: [{ id: "location", label: L("Send location", "స్థానం పంపండి") }],
+        },
+      ]);
       return;
     }
     if (action === "camera") {
@@ -1099,11 +1179,14 @@ function WhatsAppChatPage({ onBack, onNavigate }) {
     if (action === "no") {
       if (emergencyCase?.waiting === "reached") {
         const type = EMERGENCY_TYPES.find((item) => item.id === emergencyCase.typeId);
-        setShowChoices(false);
+        const team = L(type.team, type.teamTe);
         queueReplies([
           {
-            reply: `Call the ${type.team}.\n${type.phone}\n${type.teamTe} వారికి కాల్ చేయండి.`,
-            buttons: [{ id: "call", label: "Call", phone: type.phone }],
+            reply: L(
+              `Please call the ${team}.\n${type.phone}`,
+              `${team} వారికి కాల్ చేయండి.\n${type.phone}`
+            ),
+            buttons: [{ id: "call", label: L("Call", "కాల్"), phone: type.phone }],
           },
         ]);
         return;
@@ -1216,7 +1299,7 @@ function WhatsAppChatPage({ onBack, onNavigate }) {
   const roundLabel = isRecording || canSend ? "Send" : "Voice message";
 
   return (
-    <div className="relative mx-auto flex h-dvh max-h-dvh w-full max-w-sm flex-col bg-[#efeae2] shadow-2xl">
+    <div className="wa-wall relative mx-auto flex h-dvh max-h-dvh w-full max-w-sm flex-col shadow-2xl">
       <header className="flex items-center gap-1 bg-[#008069] px-1 py-1.5 text-white">
         {searchOpen ? (
           <>
@@ -1301,12 +1384,15 @@ function WhatsAppChatPage({ onBack, onNavigate }) {
       </header>
 
       <div
-        className="wa-wall flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto px-3 py-3"
+        className="scrollbar-hide relative flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto px-3 py-3"
+        ref={wallRef}
         onClick={() => setPanel(null)}
       >
-        <p className="mx-auto mb-1 rounded-lg bg-white/80 px-3 py-1 text-[12px] text-slate-500 shadow-sm">
+        <EncryptionNotice />
+        <p className="mx-auto mb-1 shrink-0 rounded-lg bg-white/80 px-3 py-1 text-[12px] text-slate-500 shadow-sm">
           Today
         </p>
+        <OpeningSeal />
         {messages.map((message) => (
           <div
             id={`msg-${message.id}`}
@@ -1317,40 +1403,6 @@ function WhatsAppChatPage({ onBack, onNavigate }) {
           </div>
         ))}
         {isTyping && <TypingBubble />}
-        {showChoices && messages.some((message) => message.id === "opening") && !isTyping && (
-          <div
-            className="ml-3 max-w-[82%] shrink-0 overflow-hidden rounded-lg bg-white shadow-sm"
-            onClick={(event) => event.stopPropagation()}
-          >
-            {GUIDES.map((guide, index) => {
-              const checked = selectedGuides.includes(guide.id);
-              return (
-                <label
-                  key={guide.id}
-                  className={`flex cursor-pointer items-center gap-3 px-3 py-2.5 text-[14px] ${
-                    index > 0 ? "border-t border-black/10" : ""
-                  } ${guide.id === "emergency" ? "text-red-600" : "text-slate-800"}`}
-                >
-                  <input
-                    type="checkbox"
-                    checked={checked}
-                    onChange={() => toggleGuide(guide.id)}
-                    className="h-4 w-4 shrink-0 accent-[#008069]"
-                  />
-                  {guide.chip}
-                </label>
-              );
-            })}
-            <button
-              type="button"
-              onClick={askSelected}
-              disabled={selectedGuides.length === 0}
-              className="w-full border-t border-black/10 py-2.5 text-center text-[14px] font-medium text-[#008069] disabled:text-slate-300"
-            >
-              Send
-            </button>
-          </div>
-        )}
         <div ref={endRef} />
       </div>
 
@@ -1361,7 +1413,7 @@ function WhatsAppChatPage({ onBack, onNavigate }) {
         {panel === "attach" && <AttachMenu onPick={handleAttach} />}
         <form
           onSubmit={handleSend}
-          className="grid w-full grid-cols-[minmax(0,1fr)_3rem] items-end gap-2 bg-[#efeae2] px-3 py-2"
+          className="grid w-full grid-cols-[minmax(0,1fr)_3rem] items-end gap-2 px-3 py-2"
         >
           {isRecording ? (
             <div className="flex min-h-12 min-w-0 items-center gap-2 rounded-full bg-white px-3 shadow-sm">

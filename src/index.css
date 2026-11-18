@@ -171,7 +171,28 @@ body {
 }
 
 .wa-wall {
-  background-color: #efeae2;
+  background-color: #f7f7f7;
+  background-image: url("/wa-wallpaper.svg?v=6");
+  background-repeat: repeat;
+  background-size: 390px 520px;
+}
+
+.wa-gov-seal {
+  mix-blend-mode: multiply;
+}
+
+.wa-gov-spin,
+.wa-gov-spin-once {
+  animation: wa-gov-spin 1.2s linear 1;
+}
+
+@keyframes wa-gov-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .wa-typing-dot {
@@ -207,6 +228,11 @@ body {
   .wa-typing-dot {
     animation: none;
     opacity: 0.8;
+  }
+
+  .wa-gov-spin,
+  .wa-gov-spin-once {
+    animation: none;
   }
 }
 
