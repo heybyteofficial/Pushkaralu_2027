@@ -9,6 +9,7 @@ import TransportPage from "./pages/TransportPage";
 import TemplesPage from "./pages/TemplesPage";
 import FoodWaterPage from "./pages/FoodWaterPage";
 import ToiletLocatorPage from "./pages/ToiletLocatorPage";
+import WhatsAppChatPage from "./pages/WhatsAppChatPage";
 
 function App() {
   const [currentScreen, setCurrentScreen] = useState("home");
@@ -72,6 +73,10 @@ function App() {
 
   if (currentScreen === "family") {
     return <FamilyMembers onBack={() => setCurrentScreen("profile")} />;
+  }
+
+  if (currentScreen === "whatsapp") {
+    return <WhatsAppChatPage onBack={() => setCurrentScreen("home")} />;
   }
 
   return <Home onNavigate={setCurrentScreen} />;

@@ -14,7 +14,7 @@ function Home({ onNavigate }) {
         <LiveStatus />
         <QuickServices onNavigate={onNavigate} />
       </div>
-      <ChatBanner />
+      <ChatBanner onChat={() => onNavigate("whatsapp")} />
       <BottomNav activeTab="home" onTabSelect={onNavigate} />
     </div>
   );

@@ -1,7 +1,7 @@
 import { ChevronRight } from "lucide-react";
 import waLogo from "../assets/wa-logo.png";
 
-function ChatBanner() {
+function ChatBanner({ onChat }) {
   return (
     <div className="fixed bottom-[40px] left-1/2 -translate-x-1/2 w-full max-w-sm px-4 z-40 select-none">
       <div className="bg-[#f0f9ff]/95 backdrop-blur border border-sky-100 rounded-[22px] p-3 flex items-center justify-between gap-3.5 shadow-md shadow-sky-900/5 hover:shadow-xl transition-all duration-300">
@@ -41,7 +41,11 @@ function ChatBanner() {
             <circle cx="41" cy="9" r="0.5" fill="currentColor" />
           </svg>
 
-          <button className="bg-[#004cd2] hover:bg-[#003db3] active:scale-95 transition-all text-white text-[11px] font-black px-3.5 py-2.5 rounded-full flex items-center gap-1 shadow-md shadow-blue-500/10 shrink-0 whitespace-nowrap">
+          <button
+            type="button"
+            onClick={onChat}
+            className="bg-[#004cd2] hover:bg-[#003db3] active:scale-95 transition-all text-white text-[11px] font-black px-3.5 py-2.5 rounded-full flex items-center gap-1 shadow-md shadow-blue-500/10 shrink-0 whitespace-nowrap"
+          >
             Chat Now
             <ChevronRight className="w-3.5 h-3.5 stroke-[3]" />
           </button>
