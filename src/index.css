@@ -4,6 +4,18 @@
 
 :root {
   font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  --wa-green: #008069;
+  --wa-green-dark: #00664f;
+  --wa-accent: #25d366;
+  --wa-fab: #00a884;
+  --wa-bg: #efeae2;
+  --wa-in: #ffffff;
+  --wa-out: #d9fdd3;
+  --wa-text: #111b21;
+  --wa-muted: #667781;
+  --wa-link: #027eb5;
+  --wa-tick-read: #53bdeb;
+  --wa-divider: #e9edef;
 }
 
 body {
@@ -170,11 +182,43 @@ body {
   }
 }
 
-.wa-wall {
-  background-color: #f7f7f7;
-  background-image: url("/wa-wallpaper.svg?v=6");
+/* Authentic WhatsApp Chat Wall & Components */
+.wa-wall, .wa-chat-wall {
+  background-color: #efeae2;
+  background-image: url("/wa-wallpaper.svg");
   background-repeat: repeat;
   background-size: 390px 520px;
+  background-position: center top;
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+
+.wa-wall::-webkit-scrollbar,
+.wa-chat-wall::-webkit-scrollbar,
+.scrollbar-hide::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+.scrollbar-hide {
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+
+@keyframes wa-pop {
+  from {
+    transform: translateY(4px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.bubble {
+  animation: wa-pop 0.15s ease-out;
 }
 
 .wa-gov-seal {
