@@ -240,19 +240,20 @@ body {
 }
 
 .wa-typing-dot {
-  width: 7px;
-  height: 7px;
+  width: 6px;
+  height: 6px;
   border-radius: 999px;
   background: #8696a0;
-  animation: wa-typing 1.2s infinite ease-in-out;
+  display: inline-block;
+  animation: wa-typing 1.3s infinite ease-in-out;
 }
 
 .wa-typing-dot:nth-child(2) {
-  animation-delay: 0.15s;
+  animation-delay: 0.18s;
 }
 
 .wa-typing-dot:nth-child(3) {
-  animation-delay: 0.3s;
+  animation-delay: 0.36s;
 }
 
 @keyframes wa-typing {
@@ -260,10 +261,10 @@ body {
   60%,
   100% {
     transform: translateY(0);
-    opacity: 0.35;
+    opacity: 0.38;
   }
   30% {
-    transform: translateY(-3px);
+    transform: translateY(-3.2px);
     opacity: 1;
   }
 }

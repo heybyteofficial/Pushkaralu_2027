@@ -391,7 +391,7 @@ export function ChatInput({
 
           {/* Authentic WhatsApp Attachment Card (strictly constrained inside phone container) */}
           <div
-            className="absolute bottom-full mb-3 left-3 right-3 sm:left-4 sm:right-4 z-40 bg-white rounded-2xl shadow-[0_8px_30px_rgba(11,20,26,0.18)] p-4 border border-[#e9edef] animate-in fade-in slide-in-from-bottom-2 zoom-in-95 duration-150 select-none"
+            className="absolute bottom-full mb-3 inset-x-0 mx-auto max-w-[340px] w-[calc(100%-24px)] z-40 bg-white rounded-[20px] shadow-[0_6px_24px_rgba(11,20,26,0.16)] p-4 border border-[#e9edef]/80 animate-in fade-in zoom-in-95 slide-in-from-bottom-2 duration-150 select-none"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="grid grid-cols-3 gap-y-4 gap-x-2">

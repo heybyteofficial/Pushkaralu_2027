@@ -150,7 +150,11 @@ export function ChatHeader({
             </span>
             <VerifiedIcon size={15} className="shrink-0" />
           </div>
-          <div className="text-[12px] text-white/85 leading-tight truncate">
+          <div
+            className={`text-[12px] leading-tight truncate transition-colors ${
+              typing ? "text-[#25d366] font-medium" : "text-white/85"
+            }`}
+          >
             {typing ? "typing…" : "Official Business Account"}
           </div>
         </div>

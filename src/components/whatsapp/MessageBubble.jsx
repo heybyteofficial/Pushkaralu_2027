@@ -510,22 +510,16 @@ export function MessageBubble({
 }
 
 /**
- * Animated Typing Indicator Bubble.
+ * Authentic WhatsApp Animated Typing Indicator Bubble.
+ * Medium-sized floating incoming bubble with 3 smooth jumping dots.
  */
 export function TypingBubble() {
   return (
-    <div className="row in flex justify-start my-1 px-2 select-none">
-      <div className="bubble in relative rounded-lg rounded-tl-none bg-white px-3.5 py-3 shadow-[0_1px_0.5px_rgba(11,20,26,0.13)] flex items-center gap-1.5">
-        <svg
-          className="absolute -top-0 -left-[8px] w-2 h-3 text-white overflow-visible pointer-events-none"
-          viewBox="0 0 8 13"
-          fill="currentColor"
-        >
-          <path d="M8 0 L0 0 L8 13 Z" />
-        </svg>
-        <span className="w-2 h-2 rounded-full bg-[#8696a0] animate-bounce [animation-delay:-0.3s]" />
-        <span className="w-2 h-2 rounded-full bg-[#8696a0] animate-bounce [animation-delay:-0.15s]" />
-        <span className="w-2 h-2 rounded-full bg-[#8696a0] animate-bounce" />
+    <div className="flex justify-start my-1.5 ml-1 select-none animate-in fade-in duration-150">
+      <div className="relative rounded-[16px] rounded-tl-[4px] bg-white px-3.5 py-2.5 shadow-[0_1px_0.5px_rgba(11,20,26,0.13)] inline-flex items-center gap-[5px]">
+        <span className="wa-typing-dot" />
+        <span className="wa-typing-dot" />
+        <span className="wa-typing-dot" />
       </div>
     </div>
   );
